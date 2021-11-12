@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Content\Models\Room.bin" />
+    <None Remove="Content\Models\Room.gltf" />
+    <None Remove="Content\Models\RoomColorsTex.png" />
+    <None Remove="Content\Shaders\HLSL\HLSL.fx" />
+    <None Remove="Content\Shaders\VK\raytracing.spirv" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Content\Models\Room.bin">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\Models\Room.gltf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\Models\RoomColorsTex.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\Shaders\HLSL\HLSL.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\Shaders\VK\raytracing.spirv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Evergine.Common" Version="2021.11.12.3-preview" />
+    <PackageReference Include="Evergine.DirectX12" Version="2021.11.12.3-preview" />
+    <PackageReference Include="Evergine.Mathematics" Version="2021.11.12.3-preview" />
+    <PackageReference Include="Evergine.Platform" Version="2021.11.12.3-preview" />
+    <PackageReference Include="Evergine.SDL" Version="2021.11.12.3-preview" />
+    <PackageReference Include="Evergine.Vulkan" Version="2021.11.12.3-preview" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj" />
+  </ItemGroup>
+
+</Project>
