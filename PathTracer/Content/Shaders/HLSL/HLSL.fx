@@ -177,12 +177,8 @@ bool TraceShadowRayAndReportIfHit(in Ray ray)
 	// Set the initial value to true since closest and any hit shaders are skipped. 
 	// Shadow miss shader, if called, will set it to false.
 	ShadowRayPayload shadowPayload = { true };
-	TraceRay(gRtScene,
-		////RAY_FLAG_CULL_BACK_FACING_TRIANGLES
-		RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH
-		////| RAY_FLAG_FORCE_OPAQUE             // ~skip any hit shaders
-		////| RAY_FLAG_SKIP_CLOSEST_HIT_SHADER, // ~skip closest hit shaders,		
-		,
+	TraceRay(gRtScene,		
+		RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH,
 		0xFF,
 		1,
 		0,
@@ -205,7 +201,6 @@ float TraceAORay(float3 orig, float3 dir, float minT, float maxT)
 
 	// Trace our ray.  Ray stops after it's first definite hit; never execute closest hit shader
 	TraceRay(gRtScene,
-		//RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH,
 		RAY_FLAG_NONE,
 		0xFF,
 		2,
@@ -489,19 +484,13 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 	color *= aoColor;
 
 	// GI
-	//float3 gi = 0;
 	if (NumBounces > 0)
 	{
 		float3 giDir = getCosHemisphereSample(randSeed, hitNormal);
-		//gi += albedo * TraceGIRay(hitPosition, giDir, randSeed, 0);
 		color.xyz += albedo.xyz * TraceGIRay(hitPosition, giDir, randSeed, 0);
 	}
 
-	//payload.color = float4(gi, 1);
 	payload.color = color;
-	//payload.color = float4(hitNormal, 1);
-	//payload.color = float4(hitPosition, 1);
-	//payload.color = float4(attribs.barycentrics.x, attribs.barycentrics.y, 0, 1);
 }
 
 [shader("closesthit")]

@@ -1,15 +1,12 @@
-﻿using ImGuiNET;
-using System;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+﻿using Common;
 using Evergine.Common.Graphics;
 using Evergine.Common.Graphics.Raytracing;
 using Evergine.Mathematics;
+using ImGuiNET;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Buffer = Evergine.Common.Graphics.Buffer;
-using System.IO;
-using Common;
 
 namespace PathTracer
 {
@@ -226,6 +223,7 @@ namespace PathTracer
         }
 
         public PathTracerTest()
+            :base()
         {
         }
 
@@ -257,7 +255,7 @@ namespace PathTracer
                 CompilationMode = CompilationMode.Debug,
             };
             GraphicsBackend backend = graphicsContext.BackendType;
-            byte[] bytecode = null;
+            byte[] bytecode;
             switch (backend)
             {
                 case GraphicsBackend.DirectX12:
@@ -687,8 +685,6 @@ namespace PathTracer
 
             this.uiRenderer.NewFrame(gameTime);
 
-            ////ImGui.SetNextWindowPos(new System.Numerics.Vector2(970, 10));
-            ////ImGui.SetNextWindowSize(new System.Numerics.Vector2(300, 150));
             ImGui.Begin("Path Tracing");
 
             float x = this.worldInfo.LightPosition.X;
@@ -716,39 +712,9 @@ namespace PathTracer
             ImGui.SliderInt("Num Samples", ref this.pathTracerNumSamples, 0, 1024);
             ImGui.ProgressBar((float)this.pathTracerSampleIndex / (float)this.pathTracerNumSamples);
 
-            /*ImGui.Spacing();
-            ImGui.Separator();
-            ImGui.Spacing();
-
-            this.worldInfo.LightAmbientColor = this.SliderVector4("LightAmbientColor", this.worldInfo.LightAmbientColor, 0.0f, 1.0f);
-            this.worldInfo.LightDiffuseColor = this.SliderVector4("LightDiffuseColor", this.worldInfo.LightDiffuseColor, 0.0f, 1.0f);
-            this.worldInfo.LightSpecularColor = this.SliderVector4("LightSpecularColor", this.worldInfo.LightSpecularColor, 0.0f, 1.0f);
-            ImGui.SliderFloat("DiffuseCoef", ref this.worldInfo.DiffuseCoef, 0.0f, 1.0f);
-            ImGui.SliderFloat("SpecularCoef", ref this.worldInfo.SpecularCoef, 0.0f, 1.0f);
-            ImGui.SliderFloat("SpecularPower", ref this.worldInfo.SpecularPower, 0.0f, 100.0f);
-            ImGui.SliderFloat("InShadowRadiance", ref this.worldInfo.InShadowRadiance, 0.0f, 1.0f);
-            this.worldInfo.CameraPosition = this.SliderVector3("Camera Position", this.worldInfo.CameraPosition, -10.0f, 10.0f);
-            this.worldInfo.CameraWorldViewProj = this.CreateCameraMatrix(this.worldInfo.CameraPosition);*/
-
             ImGui.End();
 
             this.uiRenderer.Render(commandBuffer);
-        }
-
-        private Vector4 SliderVector4(string name, Vector4 v, float min, float max)
-        {
-            System.Numerics.Vector4 av = new System.Numerics.Vector4(v.X, v.Y, v.Z, v.W);
-            ImGui.SliderFloat4(name, ref av, min, max);
-
-            return new Vector4(av.X, av.Y, av.Z, av.W);
-        }
-
-        private Vector3 SliderVector3(string name, Vector3 v, float min, float max)
-        {
-            System.Numerics.Vector3 av = new System.Numerics.Vector3(v.X, v.Y, v.Z);
-            ImGui.SliderFloat3(name, ref av, min, max);
-
-            return new Vector3(av.X, av.Y, av.Z);
         }
 
         private Matrix4x4 CreateCameraMatrix(Vector3 cameraPosition)
