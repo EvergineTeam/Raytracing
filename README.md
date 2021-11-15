@@ -1,5 +1,5 @@
 # Path Tracer Demo using Evergine
----
+
 This is a toy path tracer demo used to show the Evergine raytracing common low-level API capabilities. In this demo, you can see how to implement a little room path tracer with _Soft Shadow_, _Ambient Occlusion_, _Global Ilumination_, and _Antialiasing_.
 
 For more details about this demo read this [article]().
@@ -32,5 +32,10 @@ The parameters available for manage the path tracer render are:
 To compile HLSL _(DX12)_ shader to SpirV _(Vulkan)_ you can use the **shaderTranslator.ps1** script in _Content/Shaders folder_.
 
 ---
-Powered by Evergine
+Powered by [Evergine](https://evergine.com)
 
+LET'S CONNECT!
+
+Youtube
+Twitter
+Blog
