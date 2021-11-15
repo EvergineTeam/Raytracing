@@ -26,7 +26,7 @@ The parameters available for manage the path tracer render are:
 - GI Num Bounces: Number of bounces of Global illumination rays.
 - Num Samples: Number of samples used to the path tracer render.
 
-![Parameters](Screenshots/interface.png)
+![Parameters](Screenshots/Interface.png)
 
 ## Compile Shader HLSL to SpirV
 To compile HLSL _(DX12)_ shader to SpirV _(Vulkan)_ you can use the **shaderTranslator.ps1** script in _Content/Shaders folder_.
