@@ -695,19 +695,19 @@ namespace PathTracer
             float y = this.worldInfo.LightPosition.Y;
             float z = this.worldInfo.LightPosition.Z;
 
-            ImGui.SliderFloat("Pos X", ref x, -10, 10);
-            ImGui.SliderFloat("Pos Y", ref y, -10, 10);
-            ImGui.SliderFloat("Pos Z", ref z, -10, 10);
+            ImGui.SliderFloat("Camera Pos X", ref x, -10, 10);
+            ImGui.SliderFloat("Camera Pos Y", ref y, -10, 10);
+            ImGui.SliderFloat("Camera Pos Z", ref z, -10, 10);
 
             this.worldInfo.LightPosition.X = x;
             this.worldInfo.LightPosition.Y = y;
             this.worldInfo.LightPosition.Z = z;
-            ImGui.SliderFloat("Radius", ref this.worldInfo.LightRadius, 0.0f, 2.0f);
+            ImGui.SliderFloat("Light Radius", ref this.worldInfo.LightRadius, 0.0f, 2.0f);
 
-            ImGui.SliderInt("NumRays", ref this.worldInfo.NumRays, 0, 32);
-            ImGui.SliderFloat("AORadius", ref this.worldInfo.AORadius, 0.0f, 2.0f);
+            ImGui.SliderInt("AO Num Rays", ref this.worldInfo.NumRays, 0, 32);
+            ImGui.SliderFloat("AO Radius", ref this.worldInfo.AORadius, 0.0f, 2.0f);
 
-            ImGui.SliderInt("NumBounces", ref this.worldInfo.NumBounces, 0, 2);
+            ImGui.SliderInt("GI Num Bounces", ref this.worldInfo.NumBounces, 0, 2);
 
             ImGui.Spacing();
             ImGui.Separator();
