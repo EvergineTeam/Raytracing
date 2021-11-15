@@ -4,14 +4,15 @@ This is a toy path tracer demo used to show the Evergine raytracing common low-l
 
 For more details about this demo read this [article]().
 
-![Path tracer demo](Screenshots/render.png)
+![Path tracer demo](Screenshots/Render.png)
 
 _Note. The room model cortesy of Hedgehog https://sketchfab.com/3d-models/room-b3880b99c5214c9f8fd3f7d1473df661_
 
 ## Build and Run
 
-Required Visual Studio 2022 with.NET6 support
+- Required Visual Studio 2022 with.NET6 support
 - Required Graphics card with Raytracing technology _(Ej. NVidia Geforce 2060 or higher)_
+- DirectX12 and Vulkan support. (Change in the program.cs or pass as arguments)
 
 ## Parameters
 
@@ -26,6 +27,9 @@ The parameters available for manage the path tracer render are:
 - Num Samples: Number of samples used to the path tracer render.
 
 ![Parameters](Screenshots/interface.png)
+
+## Compile Shader HLSL to SpirV
+To compile HLSL _(DX12)_ shader to SpirV _(Vulkan)_ you can use the **shaderTranslator.ps1** script in _Content/Shaders folder_.
 
 ---
 Powered by Evergine
