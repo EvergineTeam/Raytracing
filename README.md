@@ -36,6 +36,6 @@ Powered by [Evergine](https://evergine.com)
 
 LET'S CONNECT!
 
-Youtube
-Twitter
-Blog
+- [Youtube](https://www.youtube.com/channel/UCpA-X92rxM0OuywdVcir9mA)
+- [Twitter](https://twitter.com/EvergineTeam)
+- [News](https://evergine.com/news/)
