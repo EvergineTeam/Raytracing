@@ -11,6 +11,7 @@
     <None Remove="Content\Models\Room.bin" />
     <None Remove="Content\Models\Room.gltf" />
     <None Remove="Content\Models\RoomColorsTex.png" />
+    <None Remove="Content\Models\RoomRoughnessTex.png" />
     <None Remove="Content\Shaders\HLSL\HLSL.fx" />
     <None Remove="Content\Shaders\VK\raytracing.spirv" />
   </ItemGroup>
@@ -23,6 +24,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Content\Models\RoomColorsTex.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\Models\RoomRoughnessTex.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Content\Shaders\HLSL\HLSL.fx">

@@ -18,7 +18,9 @@
 	float AORadius : packoffset(c7.x);
 	float AORayMin : packoffset(c7.y);
 	float2 PixelOffset : packoffset(c7.z);
-	float4x4 CameraWorldViewProj : packoffset(c8.x);
+	float ReflectanceCoef : packoffset(c8.x);
+	uint MaxRecursionDepth : packoffset(c8.y);
+	float4x4 CameraWorldViewProj : packoffset(c9.x);
 };
 
 RaytracingAccelerationStructure gRtScene : register(t0);
@@ -30,6 +32,7 @@ StructuredBuffer<float3> Normals : register(t2);
 StructuredBuffer<float2> Texcoords : register(t3);
 
 Texture2D DiffuseTexture : register(t4);
+Texture2D RoughnessTexture : register(t5);
 SamplerState DiffuseSampler : register(s0);
 
 /* Helpers */

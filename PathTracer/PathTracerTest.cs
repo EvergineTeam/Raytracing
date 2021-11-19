@@ -161,7 +161,7 @@ namespace PathTracer
                 new Vector2(9.921875e-01f, 7.366255e-01f),
         };
 
-        [StructLayout(LayoutKind.Explicit, Size = 192)]
+        [StructLayout(LayoutKind.Explicit, Size = 208)]
         public struct WorldInfo
         {
             [FieldOffset(0)]
@@ -219,6 +219,12 @@ namespace PathTracer
             public Vector2 PixelOffset;
 
             [FieldOffset(128)]
+            public float ReflectanceCoef;
+
+            [FieldOffset(132)]
+            public uint MaxRecursionDepth;
+
+            [FieldOffset(144)]
             public Matrix4x4 CameraWorldViewProj;
         }
 
@@ -317,9 +323,39 @@ namespace PathTracer
                                     new LayoutElementDescription(2, ResourceType.StructuredBuffer, ShaderStages.RayGeneration | ShaderStages.ClosestHit),
                                     new LayoutElementDescription(3, ResourceType.StructuredBuffer, ShaderStages.RayGeneration | ShaderStages.ClosestHit),
                                     new LayoutElementDescription(4, ResourceType.Texture, ShaderStages.RayGeneration | ShaderStages.ClosestHit),
+                                    new LayoutElementDescription(5, ResourceType.Texture, ShaderStages.RayGeneration | ShaderStages.ClosestHit),
                                     new LayoutElementDescription(0, ResourceType.Sampler, ShaderStages.RayGeneration | ShaderStages.ClosestHit)
                                     );
             ResourceLayout resourcesLayout = this.graphicsContext.Factory.CreateResourceLayout(ref layoutDescription);
+
+            // Camera Settings
+            Vector3 cameraPosition = new Vector3(2.05f, 2.0f, 1.53f);
+
+            // WorldInfo Constant buffer
+            this.worldInfo = new WorldInfo()
+            {
+                CameraPosition = cameraPosition,
+                NumBounces = 1,
+                LightAmbientColor = new Vector4(0.02f),
+                LightPosition = new Vector3(4.44f, 2.07f, 0.22f),
+                NumRays = 4,
+                LightDiffuseColor = new Vector4(1.0f, 1.0f, 1.0f, 1.0f),
+                LightSpecularColor = new Vector4(1, 1, 1, 1),
+                DiffuseCoef = 0.9f,
+                SpecularCoef = 0.7f,
+                SpecularPower = 50,
+                InShadowRadiance = 0.0f,
+                FrameCount = 0,
+                LightRadius = 0.03f,
+                PathTracerSampleIndex = 0,
+                PathTracerAccumulationFactor = 1.0f,
+                AORadius = 0.4f,
+                AORayMin = 0.01f,
+                PixelOffset = Vector2.One * 0.5f,
+                ReflectanceCoef = 0.9f,
+                MaxRecursionDepth = 4,
+                CameraWorldViewProj = this.CreateCameraMatrix(cameraPosition),
+            };
 
             // Raytracing Pipeline
             Trace.TraceInformation("Create a raytracing pipeline state object which defines the binding of shaders, state and resources to be used during raytracing ...");
@@ -387,7 +423,7 @@ namespace PathTracer
                                                         ClosestHitEntryPoint = "GIHit",
                                                     }
                                             },
-                                            3, //  ~ primary rays only (Max recursion depth)
+                                            this.worldInfo.MaxRecursionDepth, //  ~ primary rays only (Max recursion depth)
                                             sizeof(float) * 5, // float4 color (Max Payload size in bytes)
                                             sizeof(float) * 2 // float2 barycentrics (Max attribute size in bytes)
                                             );
@@ -500,47 +536,33 @@ namespace PathTracer
 
             this.output = this.graphicsContext.Factory.CreateTexture(ref textureDescription);
 
-            // Camera Settings
-            Vector3 cameraPosition = new Vector3(2.05f, 2.0f, 1.53f);
-
-            // WorldInfo Constant buffer
-            this.worldInfo = new WorldInfo()
-            {
-                CameraPosition = cameraPosition,
-                NumBounces = 1,
-                LightAmbientColor = new Vector4(0.02f),
-                LightPosition = new Vector3(4.44f, 2.07f, 0.22f),
-                NumRays = 4,
-                LightDiffuseColor = new Vector4(1.0f, 1.0f, 1.0f, 1.0f),
-                LightSpecularColor = new Vector4(1, 1, 1, 1),
-                DiffuseCoef = 0.9f,
-                SpecularCoef = 0.7f,
-                SpecularPower = 50,
-                InShadowRadiance = 0.0f,
-                FrameCount = 0,
-                LightRadius = 0.03f,
-                PathTracerSampleIndex = 0,
-                PathTracerAccumulationFactor = 1.0f,
-                AORadius = 0.4f,
-                AORayMin = 0.01f,
-                PixelOffset = Vector2.One * 0.5f,
-                CameraWorldViewProj = this.CreateCameraMatrix(cameraPosition),
-            };
-
+            // Constant Buffer
             var worldInfoCBDescription = new BufferDescription((uint)Unsafe.SizeOf<WorldInfo>(),
                                                                   BufferFlags.ConstantBuffer,
                                                                   ResourceUsage.Default);
             this.worldInfoCB = this.graphicsContext.Factory.CreateBuffer(ref worldInfo, ref worldInfoCBDescription);
 
-            // Create albedo texture
-            Texture albedo = null;
+            // Create diffuse texture
+            Texture diffuseTex = null;
             using (var stream = this.assetsDirectory.Open("Models/RoomColorsTex.png"))
             {
                 if (stream != null)
                 {
                     VisualTests.LowLevel.Images.Image image = VisualTests.LowLevel.Images.Image.Load(stream);
                     var albedoDescription = image.TextureDescription;
-                    albedo = graphicsContext.Factory.CreateTexture(image.DataBoxes, ref albedoDescription);
+                    diffuseTex = graphicsContext.Factory.CreateTexture(image.DataBoxes, ref albedoDescription);
+                }
+            }
+
+            // Create roughness texture
+            Texture roughnessTex = null;
+            using (var stream = this.assetsDirectory.Open("Models/RoomRoughnessTex.png"))
+            {
+                if (stream != null)
+                {
+                    VisualTests.LowLevel.Images.Image image = VisualTests.LowLevel.Images.Image.Load(stream);
+                    var roughnessDescription = image.TextureDescription;
+                    roughnessTex = graphicsContext.Factory.CreateTexture(image.DataBoxes, ref roughnessDescription);
                 }
             }
 
@@ -548,6 +570,7 @@ namespace PathTracer
             SamplerStateDescription samplerDescription = SamplerStates.LinearWrap;
             var sampler = this.graphicsContext.Factory.CreateSamplerState(ref samplerDescription);
 
+            // Resource Set
             ResourceSetDescription resourceSetDescription = new ResourceSetDescription(resourcesLayout,
                                                                                        worldInfoCB,
                                                                                        this.output,
@@ -555,7 +578,8 @@ namespace PathTracer
                                                                                        roomIndexBuffer,
                                                                                        roomNormals,
                                                                                        roomTexcoords,
-                                                                                       albedo,
+                                                                                       diffuseTex,
+                                                                                       roughnessTex,
                                                                                        sampler);
             this.resourceSet = this.graphicsContext.Factory.CreateResourceSet(ref resourceSetDescription);
 
