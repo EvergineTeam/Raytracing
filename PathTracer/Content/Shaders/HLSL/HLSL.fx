@@ -115,6 +115,13 @@ float4 CalculatePhongLighting(in float4 albedo, in float3 normal, in bool isInSh
 	return ambientColor + diffuseColor + specularColor;
 }
 
+// Fresnel reflectance - schlick approximation.
+float3 FresnelReflectanceSchlick(in float3 I, in float3 N, in float3 f0)
+{
+	float cosi = saturate(dot(-I, N));
+	return f0 + (1 - f0) * pow(1 - cosi, 5);
+}
+
 struct Ray
 {
 	float3 origin;
@@ -124,6 +131,7 @@ struct Ray
 struct RayPayload
 {
 	float4 color;
+	uint recursionDepth;
 };
 
 struct ShadowRayPayload
@@ -143,8 +151,13 @@ struct GIRayPayload
 	uint seed;
 };
 
-float4 TraceRadianceRay(in Ray ray)
+float4 TraceRadianceRay(in Ray ray, in uint currentRayRecursionDepth)
 {
+	if (currentRayRecursionDepth >= MaxRecursionDepth)
+	{
+		return float4(0, 0, 0, 0);
+	}
+
 	// Set the ray's extents.
 	RayDesc rayDesc;
 	rayDesc.Origin = ray.origin;
@@ -153,7 +166,7 @@ float4 TraceRadianceRay(in Ray ray)
 	// Note: make sure to enable face culling so as to avoid surface face fighting.
 	rayDesc.TMin = 0.01;
 	rayDesc.TMax = 10000;
-	RayPayload rayPayload = { float4(0, 0, 0, 0) };
+	RayPayload rayPayload = { float4(0, 0, 0, 0), currentRayRecursionDepth + 1 };
 	TraceRay(gRtScene,
 		RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
 		0xFF,
@@ -258,7 +271,7 @@ void rayGen()
 	Ray ray;
 	ray.origin = origin;
 	ray.direction = rayDir;
-	float4 color = TraceRadianceRay(ray);
+	float4 color = TraceRadianceRay(ray, 0);
 
 	// Path tracer
 	if (PathTracerSampleIndex == 0)
@@ -471,6 +484,19 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 	albedo = DiffuseTexture.SampleLevel(DiffuseSampler, hitUV, 0);
 
 	float4 color = CalculatePhongLighting(albedo, hitNormal, shadowRayHit, DiffuseCoef, SpecularCoef, SpecularPower);
+
+	float roughness = RoughnessTexture.SampleLevel(DiffuseSampler, hitUV, 0).x;
+	if (roughness > 0)
+	{
+		Ray reflectionRay;
+		reflectionRay.origin = hitPosition;
+		reflectionRay.direction = reflect(WorldRayDirection(), hitNormal);
+		float4 reflectionColor = TraceRadianceRay(reflectionRay, payload.recursionDepth);
+
+		float3 fresnelR = FresnelReflectanceSchlick(WorldRayDirection(), hitNormal, float3(0.5, 0.5, 0.5));
+		float4 reflectedColor = ReflectanceCoef * float4(fresnelR, 1) * reflectionColor;
+		color = lerp(color, reflectedColor, 0.5);
+	}
 
 	// AO
 	float ambientOcclusion = 0.0f;
