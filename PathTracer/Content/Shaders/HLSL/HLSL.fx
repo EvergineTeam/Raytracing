@@ -20,6 +20,7 @@
 	float2 PixelOffset : packoffset(c7.z);
 	float ReflectanceCoef : packoffset(c8.x);
 	uint MaxRecursionDepth : packoffset(c8.y);
+	float Roughness : packoffset(c8.z);
 	float4x4 CameraWorldViewProj : packoffset(c9.x);
 };
 
@@ -397,15 +398,15 @@ float3x3 angleAxis3x3(float angle, float3 axis) {
 		);
 }
 
-float3 getConeSample(inout uint randSeed, float3 shadePosition, float3 lightPosition)
+float3 getConeSample(inout uint randSeed, float3 shadePosition, float3 lightPosition, float radius)
 {
 	float3 toLight = normalize(lightPosition - shadePosition);
 
 	float3 perpL = getPerpendicularVector(toLight);
 
-	float3 toLightEdge = normalize((lightPosition + perpL * LightRadius) - shadePosition);
+	float3 toLightEdge = normalize((lightPosition + perpL * radius) - shadePosition);
 
-	float coneAngle = LightRadius > 0 ? acos(dot(toLight, toLightEdge)) * 2.0 : 0.0;
+	float coneAngle = radius > 0 ? acos(dot(toLight, toLightEdge)) * 2.0 : 0.0;
 
 	float cosAngle = cos(coneAngle);
 
@@ -471,7 +472,7 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 	uint randSeed = initRand(launchIndex.x + launchIndex.y * launchDim.x, FrameCount, 16);
 
 	// Get random cone sample
-	float3 randomLightDir = getConeSample(randSeed, hitPosition, LightPosition);
+	float3 randomLightDir = getConeSample(randSeed, hitPosition, LightPosition, LightRadius);
 
 	// Trace ray
 	Ray shadowRay = { hitPosition, randomLightDir };
@@ -490,12 +491,13 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 	{
 		Ray reflectionRay;
 		reflectionRay.origin = hitPosition;
-		reflectionRay.direction = reflect(WorldRayDirection(), hitNormal);
+		//reflectionRay.direction = reflect(WorldRayDirection(), hitNormal);
+		reflectionRay.direction = getConeSample(randSeed, hitPosition, hitPosition + reflect(WorldRayDirection(), hitNormal), Roughness);
 		float4 reflectionColor = TraceRadianceRay(reflectionRay, payload.recursionDepth);
 
 		float3 fresnelR = FresnelReflectanceSchlick(WorldRayDirection(), hitNormal, float3(0.5, 0.5, 0.5));
-		float4 reflectedColor = ReflectanceCoef * float4(fresnelR, 1) * reflectionColor;
-		color = lerp(color, reflectedColor, 0.5);
+		float4 reflectedColor = float4(fresnelR, 1) * reflectionColor;
+		color = lerp(color, reflectedColor, ReflectanceCoef);
 	}
 
 	// AO
@@ -556,7 +558,7 @@ void GIHit(inout GIRayPayload payload, in BuiltInTriangleIntersectionAttributes 
 	float4 albedo = DiffuseTexture.SampleLevel(DiffuseSampler, hitUV, 0);
 
 	// Trace ray
-	float3 randomLightDir = getConeSample(payload.seed, hitPosition, LightPosition);
+	float3 randomLightDir = getConeSample(payload.seed, hitPosition, LightPosition, LightRadius);
 	Ray shadowRay = { hitPosition, randomLightDir };
 	bool shadowRayHit = TraceShadowRayAndReportIfHit(shadowRay);
 

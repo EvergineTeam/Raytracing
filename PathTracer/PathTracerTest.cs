@@ -224,6 +224,9 @@ namespace PathTracer
             [FieldOffset(132)]
             public uint MaxRecursionDepth;
 
+            [FieldOffset(136)]
+            public float Roughness;
+
             [FieldOffset(144)]
             public Matrix4x4 CameraWorldViewProj;
         }
@@ -354,6 +357,7 @@ namespace PathTracer
                 PixelOffset = Vector2.One * 0.5f,
                 ReflectanceCoef = 0.9f,
                 MaxRecursionDepth = 4,
+                Roughness = 1,
                 CameraWorldViewProj = this.CreateCameraMatrix(cameraPosition),
             };
 
@@ -722,12 +726,15 @@ namespace PathTracer
             this.worldInfo.LightPosition.X = x;
             this.worldInfo.LightPosition.Y = y;
             this.worldInfo.LightPosition.Z = z;
-            ImGui.SliderFloat("Light Radius", ref this.worldInfo.LightRadius, 0.0f, 2.0f);
+            ImGui.SliderFloat("Light Radius", ref this.worldInfo.LightRadius, 0.0f, 0.2f);
 
             ImGui.SliderInt("AO Num Rays", ref this.worldInfo.NumRays, 0, 32);
             ImGui.SliderFloat("AO Radius", ref this.worldInfo.AORadius, 0.0f, 2.0f);
 
             ImGui.SliderInt("GI Num Bounces", ref this.worldInfo.NumBounces, 0, 2);
+
+            ImGui.SliderFloat("Reflectance Coef", ref this.worldInfo.ReflectanceCoef, 0, 1);
+            ImGui.SliderFloat("Roughness", ref this.worldInfo.Roughness, 0, 1);
 
             ImGui.Spacing();
             ImGui.Separator();
@@ -756,6 +763,8 @@ namespace PathTracer
             hash = (hash * 397) ^ worldInfo.NumRays.GetHashCode();
             hash = (hash * 397) ^ worldInfo.AORadius.GetHashCode();
             hash = (hash * 397) ^ worldInfo.NumBounces.GetHashCode();
+            hash = (hash * 397) ^ worldInfo.ReflectanceCoef.GetHashCode();
+            hash = (hash * 397) ^ worldInfo.Roughness.GetHashCode();
 
             return hash;
         }
