@@ -329,37 +329,7 @@ namespace PathTracer
                                     new LayoutElementDescription(5, ResourceType.Texture, ShaderStages.RayGeneration | ShaderStages.ClosestHit),
                                     new LayoutElementDescription(0, ResourceType.Sampler, ShaderStages.RayGeneration | ShaderStages.ClosestHit)
                                     );
-            ResourceLayout resourcesLayout = this.graphicsContext.Factory.CreateResourceLayout(ref layoutDescription);
-
-            // Camera Settings
-            Vector3 cameraPosition = new Vector3(2.05f, 2.0f, 1.53f);
-
-            // WorldInfo Constant buffer
-            this.worldInfo = new WorldInfo()
-            {
-                CameraPosition = cameraPosition,
-                NumBounces = 1,
-                LightAmbientColor = new Vector4(0.02f),
-                LightPosition = new Vector3(4.44f, 2.07f, 0.22f),
-                NumRays = 4,
-                LightDiffuseColor = new Vector4(1.0f, 1.0f, 1.0f, 1.0f),
-                LightSpecularColor = new Vector4(1, 1, 1, 1),
-                DiffuseCoef = 0.9f,
-                SpecularCoef = 0.7f,
-                SpecularPower = 50,
-                InShadowRadiance = 0.0f,
-                FrameCount = 0,
-                LightRadius = 0.03f,
-                PathTracerSampleIndex = 0,
-                PathTracerAccumulationFactor = 1.0f,
-                AORadius = 0.4f,
-                AORayMin = 0.01f,
-                PixelOffset = Vector2.One * 0.5f,
-                ReflectanceCoef = 0.9f,
-                MaxRecursionDepth = 4,
-                Roughness = 1,
-                CameraWorldViewProj = this.CreateCameraMatrix(cameraPosition),
-            };
+            ResourceLayout resourcesLayout = this.graphicsContext.Factory.CreateResourceLayout(ref layoutDescription);            
 
             // Raytracing Pipeline
             Trace.TraceInformation("Create a raytracing pipeline state object which defines the binding of shaders, state and resources to be used during raytracing ...");
@@ -427,7 +397,7 @@ namespace PathTracer
                                                         ClosestHitEntryPoint = "GIHit",
                                                     }
                                             },
-                                            this.worldInfo.MaxRecursionDepth, //  ~ primary rays only (Max recursion depth)
+                                            6, //  ~ primary rays only (Max recursion depth)
                                             sizeof(float) * 5, // float4 color (Max Payload size in bytes)
                                             sizeof(float) * 2 // float2 barycentrics (Max attribute size in bytes)
                                             );
@@ -541,6 +511,34 @@ namespace PathTracer
             this.output = this.graphicsContext.Factory.CreateTexture(ref textureDescription);
 
             // Constant Buffer
+            Vector3 cameraPosition = new Vector3(2.05f, 2.0f, 1.53f);
+
+            // WorldInfo Constant buffer
+            this.worldInfo = new WorldInfo()
+            {
+                CameraPosition = cameraPosition,
+                NumBounces = 1,
+                LightAmbientColor = new Vector4(0.02f),
+                LightPosition = new Vector3(4.44f, 2.07f, 0.22f),
+                NumRays = 4,
+                LightDiffuseColor = new Vector4(1.0f, 1.0f, 1.0f, 1.0f),
+                LightSpecularColor = new Vector4(1, 1, 1, 1),
+                DiffuseCoef = 0.9f,
+                SpecularCoef = 0.7f,
+                SpecularPower = 50,
+                InShadowRadiance = 0.0f,
+                FrameCount = 0,
+                LightRadius = 0.03f,
+                PathTracerSampleIndex = 0,
+                PathTracerAccumulationFactor = 1.0f,
+                AORadius = 0.4f,
+                AORayMin = 0.01f,
+                PixelOffset = Vector2.One * 0.5f,
+                ReflectanceCoef = 0.9f,
+                MaxRecursionDepth = 2,
+                Roughness = 1,
+                CameraWorldViewProj = this.CreateCameraMatrix(cameraPosition),
+            };
             var worldInfoCBDescription = new BufferDescription((uint)Unsafe.SizeOf<WorldInfo>(),
                                                                   BufferFlags.ConstantBuffer,
                                                                   ResourceUsage.Default);
@@ -731,7 +729,7 @@ namespace PathTracer
             ImGui.SliderInt("AO Num Rays", ref this.worldInfo.NumRays, 0, 32);
             ImGui.SliderFloat("AO Radius", ref this.worldInfo.AORadius, 0.0f, 2.0f);
 
-            ImGui.SliderInt("GI Num Bounces", ref this.worldInfo.NumBounces, 0, 2);
+            ImGui.SliderInt("GI Num Bounces", ref this.worldInfo.NumBounces, 0, 3);
 
             ImGui.SliderFloat("Reflectance Coef", ref this.worldInfo.ReflectanceCoef, 0, 1);
             ImGui.SliderFloat("Roughness", ref this.worldInfo.Roughness, 0, 1);

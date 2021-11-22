@@ -492,7 +492,8 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 		Ray reflectionRay;
 		reflectionRay.origin = hitPosition;
 		//reflectionRay.direction = reflect(WorldRayDirection(), hitNormal);
-		reflectionRay.direction = getConeSample(randSeed, hitPosition, hitPosition + reflect(WorldRayDirection(), hitNormal), Roughness);
+		float3 direction = reflect(WorldRayDirection(), hitNormal);
+		reflectionRay.direction = getConeSample(randSeed, hitPosition, hitPosition + direction, Roughness);
 		float4 reflectionColor = TraceRadianceRay(reflectionRay, payload.recursionDepth);
 
 		float3 fresnelR = FresnelReflectanceSchlick(WorldRayDirection(), hitNormal, float3(0.5, 0.5, 0.5));
@@ -580,9 +581,9 @@ void GIHit(inout GIRayPayload payload, in BuiltInTriangleIntersectionAttributes 
 
 	payload.color = color.xyz;
 
-	/*if (payload.depth < NumBounces)
+	if (payload.depth < NumBounces)
 	{
 		float3 giDir = getCosHemisphereSample(payload.seed, hitNormal);
 		payload.color += albedo.xyz * TraceGIRay(hitPosition, giDir, payload.seed, payload.depth);
-	}*/
+	}
 }
