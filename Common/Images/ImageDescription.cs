@@ -3,7 +3,7 @@
 using System;
 using Evergine.Common.Graphics;
 
-namespace VisualTests.LowLevel.Images
+namespace Common.Images
 {
     /// <summary>
     /// Describe a file image.

@@ -1,8 +1,9 @@
 ﻿using Common;
+using Evergine.Bindings.Imgui;
 using Evergine.Common.Graphics;
 using Evergine.Common.Graphics.Raytracing;
 using Evergine.Mathematics;
-using ImGuiNET;
+using Evergine.UI;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -550,7 +551,7 @@ namespace PathTracer
             {
                 if (stream != null)
                 {
-                    VisualTests.LowLevel.Images.Image image = VisualTests.LowLevel.Images.Image.Load(stream);
+                    Common.Images.Image image = Common.Images.Image.Load(stream);
                     var albedoDescription = image.TextureDescription;
                     diffuseTex = graphicsContext.Factory.CreateTexture(image.DataBoxes, ref albedoDescription);
                 }
@@ -562,7 +563,7 @@ namespace PathTracer
             {
                 if (stream != null)
                 {
-                    VisualTests.LowLevel.Images.Image image = VisualTests.LowLevel.Images.Image.Load(stream);
+                    Common.Images.Image image = Common.Images.Image.Load(stream);
                     var roughnessDescription = image.TextureDescription;
                     roughnessTex = graphicsContext.Factory.CreateTexture(image.DataBoxes, ref roughnessDescription);
                 }
@@ -702,7 +703,7 @@ namespace PathTracer
 
         }
 
-        private void DrawUI(CommandBuffer commandBuffer, TimeSpan gameTime)
+        private unsafe void DrawUI(CommandBuffer commandBuffer, TimeSpan gameTime)
         {
             this.surface.MouseDispatcher.DispatchEvents();
             this.surface.KeyboardDispatcher.DispatchEvents();
@@ -711,37 +712,55 @@ namespace PathTracer
 
             this.uiRenderer.NewFrame(gameTime);
 
-            ImGui.Begin("Path Tracing");
+            bool open = false;
+            ImguiNative.igBegin("Path Tracing", open.Pointer(), ImGuiWindowFlags.None);
 
             float x = this.worldInfo.LightPosition.X;
             float y = this.worldInfo.LightPosition.Y;
             float z = this.worldInfo.LightPosition.Z;
-
-            ImGui.SliderFloat("Camera Pos X", ref x, -10, 10);
-            ImGui.SliderFloat("Camera Pos Y", ref y, -10, 10);
-            ImGui.SliderFloat("Camera Pos Z", ref z, -10, 10);
+            
+            ImguiNative.igSliderFloat("Camera Pos X", &x, -10.0f, 10.0f, null, ImGuiSliderFlags.None);
+            ImguiNative.igSliderFloat("Camera Pos Y", &y, -10.0f, 10.0f, null, ImGuiSliderFlags.None);
+            ImguiNative.igSliderFloat("Camera Pos Z", &z, -10.0f, 10.0f, null, ImGuiSliderFlags.None);
 
             this.worldInfo.LightPosition.X = x;
             this.worldInfo.LightPosition.Y = y;
             this.worldInfo.LightPosition.Z = z;
-            ImGui.SliderFloat("Light Radius", ref this.worldInfo.LightRadius, 0.0f, 0.2f);
+            float lightRadius = this.worldInfo.LightRadius;
+            ImguiNative.igSliderFloat("Light Radius", &lightRadius, 0.0f, 0.2f, null, ImGuiSliderFlags.None);
+            this.worldInfo.LightRadius = lightRadius;
+            
+            int numRays = this.worldInfo.NumRays;
+            ImguiNative.igSliderInt("AO Num Rays", &numRays, 0, 32, null, ImGuiSliderFlags.None);
+            this.worldInfo.NumRays = numRays;
+            
+            float aoRadius = this.worldInfo.AORadius;
+            ImguiNative.igSliderFloat("AO Radius", &aoRadius, 0.0f, 2.0f, null, ImGuiSliderFlags.None);
+            this.worldInfo.AORadius = aoRadius;
+            
+            int numBounces = this.worldInfo.NumBounces;
+            ImguiNative.igSliderInt("GI Num Bounces", &numBounces, 0, 3, null, ImGuiSliderFlags.None);
+            this.worldInfo.NumBounces = numBounces;
+            
+            float reflectanceCoef = this.worldInfo.ReflectanceCoef;
+            ImguiNative.igSliderFloat("Reflectance Coef", &reflectanceCoef, 0, 1, null, ImGuiSliderFlags.None);
+            this.worldInfo.ReflectanceCoef = reflectanceCoef;
+            
+            float roughness = this.worldInfo.Roughness;
+            ImguiNative.igSliderFloat("Roughness", &roughness, 0,1, null, ImGuiSliderFlags.None);
+            this.worldInfo.Roughness = roughness;
 
-            ImGui.SliderInt("AO Num Rays", ref this.worldInfo.NumRays, 0, 32);
-            ImGui.SliderFloat("AO Radius", ref this.worldInfo.AORadius, 0.0f, 2.0f);
+            ImguiNative.igSpacing();
+            ImguiNative.igSeparator();
+            ImguiNative.igSpacing();            
 
-            ImGui.SliderInt("GI Num Bounces", ref this.worldInfo.NumBounces, 0, 3);
-
-            ImGui.SliderFloat("Reflectance Coef", ref this.worldInfo.ReflectanceCoef, 0, 1);
-            ImGui.SliderFloat("Roughness", ref this.worldInfo.Roughness, 0, 1);
-
-            ImGui.Spacing();
-            ImGui.Separator();
-            ImGui.Spacing();
-
-            ImGui.SliderInt("Num Samples", ref this.pathTracerNumSamples, 0, 1024);
-            ImGui.ProgressBar((float)this.pathTracerSampleIndex / (float)this.pathTracerNumSamples);
-
-            ImGui.End();
+            int numSamples = this.pathTracerNumSamples;
+            ImguiNative.igSliderInt("Num Samples", &numSamples, 0, 1024, null, ImGuiSliderFlags.None);
+            this.pathTracerNumSamples = numSamples;
+            
+            ImguiNative.igProgressBar((float)this.pathTracerSampleIndex / (float)this.pathTracerNumSamples, Vector2.Zero, null);
+            
+            ImguiNative.igEnd();
 
             this.uiRenderer.Render(commandBuffer);
         }

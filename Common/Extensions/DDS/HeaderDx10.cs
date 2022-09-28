@@ -25,7 +25,7 @@ freely, subject to the following restrictions:
 
 using System.Runtime.InteropServices;
 
-namespace Evergine.Assets.Extensions.DDS
+namespace Common.Images.DDS
 {
     [StructLayout(LayoutKind.Sequential, Pack = 4, Size = 32)]
     internal struct HeaderDx10

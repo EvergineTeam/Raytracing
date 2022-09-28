@@ -2,7 +2,7 @@
 
 using System;
 
-namespace Evergine.Assets.Extensions.KTX
+namespace Common.Images.KTX
 {
     /// <summary>
     /// Helper class.

@@ -1,6 +1,6 @@
 ﻿// Copyright © 2019 Wave Engine S.L. All rights reserved. Use is subject to license terms.
 
-namespace Evergine.Assets.Extensions.KTX
+namespace Common.Images.KTX
 {
     /// <summary>
     /// For each mipmap level in numberOfMipmapLevels.

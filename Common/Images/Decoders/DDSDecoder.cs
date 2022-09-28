@@ -3,11 +3,11 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using Evergine.Assets.Extensions.DDS;
+using Common.Images.DDS;
 using Evergine.Common.Graphics;
 using Evergine.Framework.Assets.Extensions;
 
-namespace VisualTests.LowLevel.Images
+namespace Common.Images
 {
     public class DDSDecoder : IDecoder
     {

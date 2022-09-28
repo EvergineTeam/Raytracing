@@ -25,7 +25,7 @@ freely, subject to the following restrictions:
 
 using System;
 
-namespace Evergine.Assets.Extensions.DDS
+namespace Common.Images.DDS
 {
     [Flags]
     internal enum HeaderFlags : uint

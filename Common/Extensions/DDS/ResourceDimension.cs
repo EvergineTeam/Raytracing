@@ -23,7 +23,7 @@ freely, subject to the following restrictions:
    distribution.
 */
 
-namespace Evergine.Assets.Extensions.DDS
+namespace Common.Images.DDS
 {
     internal enum ResourceDimension : uint
     {

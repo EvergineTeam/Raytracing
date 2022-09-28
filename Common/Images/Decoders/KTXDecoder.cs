@@ -2,11 +2,11 @@
 
 using System;
 using System.IO;
-using Evergine.Assets.Extensions.KTX;
+using Common.Images.KTX;
 using Evergine.Common.Graphics;
 using Evergine.Framework.Assets.Extensions;
 
-namespace VisualTests.LowLevel.Images
+namespace Common.Images
 {
     /// <summary>
     /// KTX File Format decoder

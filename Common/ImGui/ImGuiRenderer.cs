@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
+﻿using Evergine.Bindings.Imgui;
 using Evergine.Common.Graphics;
 using Evergine.Common.Input.Keyboard;
 using Evergine.Common.Input.Mouse;
-using Evergine.Framework;
 using Evergine.Mathematics;
+using System.Runtime.CompilerServices;
 using Buffer = Evergine.Common.Graphics.Buffer;
 
 namespace Common
@@ -23,11 +21,11 @@ namespace Common
         private GraphicsPipelineState pipelineState;
         private ResourceLayout layout;
         private ResourceSet resourceSet;
-        private ImGuiNET.ImGuiIOPtr io;
+        private ImGuiIO* io;
 
         private int windowWidth;
         private int windowHeight;
-        private System.Numerics.Vector2 scaleFactor;
+        private Vector2 scaleFactor;
 
         private IntPtr fontAtlasID;
         private FrameBuffer framebuffer;
@@ -55,7 +53,7 @@ namespace Common
             this.graphicsContext = context;
             this.surface = surface;
             this.framebuffer = fb;
-            this.scaleFactor = System.Numerics.Vector2.One;
+            this.scaleFactor = Vector2.One;
             this.fontAtlasID = (IntPtr)1;
 
             this.InitializeImGui();
@@ -63,11 +61,11 @@ namespace Common
 
         private unsafe void InitializeImGui()
         {
-            IntPtr imGuiContext = ImGuiNET.ImGui.CreateContext();
-            ImGuiNET.ImGui.SetCurrentContext(imGuiContext);
+            IntPtr imGuiContext = ImguiNative.igCreateContext((ImFontAtlas*)null);
+            ImguiNative.igSetCurrentContext(imGuiContext);
 
-            this.io = ImGuiNET.ImGui.GetIO();
-            this.io.Fonts.AddFontDefault();
+            this.io = ImguiNative.igGetIO();
+            this.io->Fonts->AddFontDefault(null);
 
             // Compile shaders.
             var vsCode = this.NativeAPICompiler(ShaderStages.Vertex);
@@ -155,9 +153,13 @@ namespace Common
             this.constantBuffer = this.graphicsContext.Factory.CreateBuffer(ref constantBufferDescription);
 
             // Create Font Texture
-            this.io.Fonts.GetTexDataAsRGBA32(out byte* pixels, out int width, out int height, out int bytesPerPixel);
+            int width;
+            int height;
+            int bytesPerPixel;
+            byte* pixels = null;
+            this.io->Fonts->GetTexDataAsRGBA32(&pixels, &width, &height, &bytesPerPixel);
 
-            this.io.Fonts.SetTexID(this.fontAtlasID);
+            this.io->Fonts->SetTexID(this.fontAtlasID);
 
             var fontTextureDescription = new TextureDescription()
             {
@@ -196,91 +198,100 @@ namespace Common
             var resourceSetDescription = new ResourceSetDescription(this.layout, this.constantBuffer, this.fontTexture, this.sampler);
             this.resourceSet = this.graphicsContext.Factory.CreateResourceSet(ref resourceSetDescription);
 
-            this.io.Fonts.ClearTexData();
+            this.io->Fonts->ClearTexData();
 
             // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array that we will update during the application lifetime.
-            this.io.KeyMap[(int)ImGuiNET.ImGuiKey.Tab] = (int)Keys.Tab;
-            this.io.KeyMap[(int)ImGuiNET.ImGuiKey.LeftArrow] = (int)Keys.Left;
-            this.io.KeyMap[(int)ImGuiNET.ImGuiKey.RightArrow] = (int)Keys.Right;
-            this.io.KeyMap[(int)ImGuiNET.ImGuiKey.UpArrow] = (int)Keys.Up;
-            this.io.KeyMap[(int)ImGuiNET.ImGuiKey.DownArrow] = (int)Keys.Down;
-            this.io.KeyMap[(int)ImGuiNET.ImGuiKey.PageUp] = (int)Keys.PageUp;
-            this.io.KeyMap[(int)ImGuiNET.ImGuiKey.PageDown] = (int)Keys.PageDown;
-            this.io.KeyMap[(int)ImGuiNET.ImGuiKey.Home] = (int)Keys.Home;
-            this.io.KeyMap[(int)ImGuiNET.ImGuiKey.End] = (int)Keys.End;
-            this.io.KeyMap[(int)ImGuiNET.ImGuiKey.Delete] = (int)Keys.Delete;
-            this.io.KeyMap[(int)ImGuiNET.ImGuiKey.Backspace] = (int)Keys.Back;
-            this.io.KeyMap[(int)ImGuiNET.ImGuiKey.Enter] = (int)Keys.Enter;
-            this.io.KeyMap[(int)ImGuiNET.ImGuiKey.Escape] = (int)Keys.Escape;
-            this.io.KeyMap[(int)ImGuiNET.ImGuiKey.A] = (int)Keys.A;
-            this.io.KeyMap[(int)ImGuiNET.ImGuiKey.C] = (int)Keys.C;
-            this.io.KeyMap[(int)ImGuiNET.ImGuiKey.V] = (int)Keys.V;
-            this.io.KeyMap[(int)ImGuiNET.ImGuiKey.X] = (int)Keys.X;
-            this.io.KeyMap[(int)ImGuiNET.ImGuiKey.Y] = (int)Keys.Y;
-            this.io.KeyMap[(int)ImGuiNET.ImGuiKey.Z] = (int)Keys.Z;
+            this.io->KeyMap[(int)ImGuiKey.Tab] = (int)Keys.Tab;
+            this.io->KeyMap[(int)ImGuiKey.LeftArrow] = (int)Keys.Left;
+            this.io->KeyMap[(int)ImGuiKey.RightArrow] = (int)Keys.Right;
+            this.io->KeyMap[(int)ImGuiKey.UpArrow] = (int)Keys.Up;
+            this.io->KeyMap[(int)ImGuiKey.DownArrow] = (int)Keys.Down;
+            this.io->KeyMap[(int)ImGuiKey.PageUp] = (int)Keys.PageUp;
+            this.io->KeyMap[(int)ImGuiKey.PageDown] = (int)Keys.PageDown;
+            this.io->KeyMap[(int)ImGuiKey.Home] = (int)Keys.Home;
+            this.io->KeyMap[(int)ImGuiKey.End] = (int)Keys.End;
+            this.io->KeyMap[(int)ImGuiKey.Delete] = (int)Keys.Delete;
+            this.io->KeyMap[(int)ImGuiKey.Backspace] = (int)Keys.Back;
+            this.io->KeyMap[(int)ImGuiKey.Enter] = (int)Keys.Enter;
+            this.io->KeyMap[(int)ImGuiKey.Escape] = (int)Keys.Escape;
+            this.io->KeyMap[(int)ImGuiKey.A] = (int)Keys.A;
+            this.io->KeyMap[(int)ImGuiKey.C] = (int)Keys.C;
+            this.io->KeyMap[(int)ImGuiKey.V] = (int)Keys.V;
+            this.io->KeyMap[(int)ImGuiKey.X] = (int)Keys.X;
+            this.io->KeyMap[(int)ImGuiKey.Y] = (int)Keys.Y;
+            this.io->KeyMap[(int)ImGuiKey.Z] = (int)Keys.Z;
 
             // Register input events
             var mouseDispatcher = this.surface.MouseDispatcher;
-            mouseDispatcher.MouseButtonDown += (s, e) =>
-            {
-                switch (e.Button)
-                {
-                    case MouseButtons.Left:
-                        this.io.MouseDown[0] = true;
-                        break;
-                    case MouseButtons.Right:
-                        this.io.MouseDown[1] = true;
-                        break;
-                    case MouseButtons.Middle:
-                        this.io.MouseDown[2] = true;
-                        break;
-                }
-            };
-
-            mouseDispatcher.MouseButtonUp += (s, e) =>
-            {
-                switch (e.Button)
-                {
-                    case MouseButtons.Left:
-                        this.io.MouseDown[0] = false;
-                        break;
-                    case MouseButtons.Right:
-                        this.io.MouseDown[1] = false;
-                        break;
-                    case MouseButtons.Middle:
-                        this.io.MouseDown[2] = false;
-                        break;
-                    default:
-                        break;
-                }
-            };
-
-            mouseDispatcher.MouseMove += (s, e) =>
-            {
-                this.io.MousePos.X = e.Position.X;
-                this.io.MousePos.Y = e.Position.Y;
-            };
-
-            mouseDispatcher.MouseScroll += (s, e) =>
-            {
-                this.io.MouseWheel = e.Delta.Y;
-            };
+            mouseDispatcher.MouseButtonDown += this.MouseDispatcher_MouseButtonDown;
+            mouseDispatcher.MouseButtonUp += this.MouseDispatcher_MouseButtonUp;
+            mouseDispatcher.MouseMove += this.MouseDispatcher_MouseMove;
+            mouseDispatcher.MouseScroll += this.MouseDispatcher_MouseScroll;
 
             var keyboardDispatcher = this.surface.KeyboardDispatcher;
-            keyboardDispatcher.KeyDown += (s, e) =>
-            {
-                this.io.KeysDown[(int)e.Key] = true;
-            };
+            keyboardDispatcher.KeyDown += this.KeyboardDispatcher_KeyDown;
+            keyboardDispatcher.KeyUp += this.KeyboardDispatcher_KeyUp;
+            keyboardDispatcher.KeyChar += this.KeyboardDispatcher_KeyChar;
+        }
 
-            keyboardDispatcher.KeyUp += (s, e) =>
-            {
-                this.io.KeysDown[(int)e.Key] = false;
-            };
+        private void KeyboardDispatcher_KeyChar(object? sender, KeyCharEventArgs e)
+        {
+            this.io->AddInputCharacter(e.Character);
+        }
 
-            keyboardDispatcher.KeyChar += (s, e) =>
+        private void KeyboardDispatcher_KeyUp(object? sender, KeyEventArgs e)
+        {
+            this.io->KeysDown[(int)e.Key] = 0;
+        }
+
+        private void KeyboardDispatcher_KeyDown(object? sender, KeyEventArgs e)
+        {
+            this.io->KeysDown[(int)e.Key] = 1;
+        }
+
+        private void MouseDispatcher_MouseScroll(object? sender, MouseScrollEventArgs e)
+        {
+            this.io->MouseWheel = e.Delta.Y;
+        }
+
+        private void MouseDispatcher_MouseMove(object? sender, MouseEventArgs e)
+        {
+            this.io->MousePos.X = e.Position.X / this.surface.DPIDensity;
+            this.io->MousePos.Y = e.Position.Y / this.surface.DPIDensity;
+        }
+
+        private void MouseDispatcher_MouseButtonUp(object? sender, MouseButtonEventArgs e)
+        {
+            switch (e.Button)
             {
-                this.io.AddInputCharacter(e.Character);
-            };
+                case MouseButtons.Left:
+                    this.io->MouseDown[0] = 0;
+                    break;
+                case MouseButtons.Right:
+                    this.io->MouseDown[1] = 0;
+                    break;
+                case MouseButtons.Middle:
+                    this.io->MouseDown[2] = 0;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private void MouseDispatcher_MouseButtonDown(object? sender, MouseButtonEventArgs e)
+        {
+            switch (e.Button)
+            {
+                case MouseButtons.Left:
+                    this.io->MouseDown[0] = 1;
+                    break;
+                case MouseButtons.Right:
+                    this.io->MouseDown[1] = 1;
+                    break;
+                case MouseButtons.Middle:
+                    this.io->MouseDown[2] = 1;
+                    break;
+            }
         }
 
         private byte[] NativeAPICompiler(ShaderStages stage)
@@ -335,24 +346,24 @@ namespace Common
 
         public void NewFrame(TimeSpan gameTime)
         {
-            this.io.DisplaySize = new System.Numerics.Vector2(
+            this.io->DisplaySize = new Vector2(
                             this.windowWidth / this.scaleFactor.X,
                             this.windowHeight / this.scaleFactor.Y);
 
-            this.io.DisplayFramebufferScale = this.scaleFactor;
-            this.io.DeltaTime = (float)gameTime.TotalSeconds;
+            this.io->DisplayFramebufferScale = this.scaleFactor;
+            this.io->DeltaTime = (float)gameTime.TotalSeconds;
 
             // Read keyboard modifiers input
             var keyboardDispatcher = this.surface.KeyboardDispatcher;
-            this.io.KeyCtrl = keyboardDispatcher.IsKeyDown(Keys.LeftControl);
-            this.io.KeyShift = keyboardDispatcher.IsKeyDown(Keys.LeftShift);
-            this.io.KeyAlt = keyboardDispatcher.IsKeyDown(Keys.LeftAlt);
+            this.io->KeyCtrl = keyboardDispatcher.IsKeyDown(Keys.LeftControl) ? (byte)1 : (byte)0;
+            this.io->KeyShift = keyboardDispatcher.IsKeyDown(Keys.LeftShift) ? (byte)1 : (byte)0;
+            this.io->KeyAlt = keyboardDispatcher.IsKeyDown(Keys.LeftAlt) ? (byte)1 : (byte)0;
 
             // Set orthographics projection matrix
             this.mvp = Matrix4x4.CreateOrthographicOffCenter(
                 0f,
-                this.io.DisplaySize.X,
-                this.io.DisplaySize.Y,
+                this.io->DisplaySize.X,
+                this.io->DisplaySize.Y,
                 0.0f,
                 -1.0f,
                 1.0f,
@@ -363,131 +374,129 @@ namespace Common
                 this.mvp.M22 *= -1;
             }
 
-            ImGuiNET.ImGui.NewFrame();
+            ImguiNative.igNewFrame();
         }
 
         public void Render(CommandBuffer commandBuffer)
         {
-            ImGuiNET.ImGui.Render();
+            ImguiNative.igRender();
 
             uint vertexOffsetInVertices = 0;
             uint indexOffsetInElements = 0;
 
-            ImGuiNET.ImDrawDataPtr drawData = ImGuiNET.ImGui.GetDrawData();
+            ImDrawData* drawData = ImguiNative.igGetDrawData();
 
-            if (drawData.CmdListsCount == 0)
+            if (drawData->CmdListsCount > 0)
             {
-                return;
-            }
-
-            // Resize index and vertex buffers.
-            int vertexBufferSize = drawData.TotalVtxCount * sizeof(ImGuiNET.ImDrawVert);
-            if (vertexBufferSize > this.vertexBuffers[0].Description.SizeInBytes)
-            {
-                this.vertexBuffers[0].Dispose();
-                uint nextSize = (uint)MathHelper.NextPowerOfTwo(vertexBufferSize);
-                var vertexBufferDescription = new BufferDescription(
-                    nextSize,
-                    BufferFlags.VertexBuffer,
-                    ResourceUsage.Dynamic,
-                    ResourceCpuAccess.Write);
-
-                this.vertexBuffers[0] = this.graphicsContext.Factory.CreateBuffer(ref vertexBufferDescription);
-            }
-
-            int indexBufferSize = drawData.TotalIdxCount * sizeof(ushort);
-            if (indexBufferSize > this.indexBuffer.Description.SizeInBytes)
-            {
-                this.indexBuffer.Dispose();
-                uint nextSize = (uint)MathHelper.NextPowerOfTwo(indexBufferSize);
-                var indexBufferDescription = new BufferDescription(
-                    nextSize,
-                    BufferFlags.IndexBuffer,
-                    ResourceUsage.Dynamic,
-                    ResourceCpuAccess.Write);
-
-                this.indexBuffer = this.graphicsContext.Factory.CreateBuffer(ref indexBufferDescription);
-            }
-
-            // Update index and vertex buffers.
-            var vResource = this.graphicsContext.MapMemory(this.vertexBuffers[0], MapMode.Write);
-            var iResource = this.graphicsContext.MapMemory(this.indexBuffer, MapMode.Write);
-
-            for (int i = 0; i < drawData.CmdListsCount; i++)
-            {
-                ImGuiNET.ImDrawListPtr cmdList = drawData.CmdListsRange[i];
-
-                // Copy vertex
-                var vOffset = vertexOffsetInVertices * (uint)sizeof(ImGuiNET.ImDrawVert);
-                Unsafe.CopyBlock((void*)((long)vResource.Data + vOffset), (void*)cmdList.VtxBuffer.Data, (uint)(cmdList.VtxBuffer.Size * sizeof(ImGuiNET.ImDrawVert)));
-
-                // Copy index
-                var iOffset = indexOffsetInElements * sizeof(ushort);
-                Unsafe.CopyBlock((void*)((long)iResource.Data + iOffset), (void*)cmdList.IdxBuffer.Data, (uint)(cmdList.IdxBuffer.Size * sizeof(ushort)));
-
-                vertexOffsetInVertices += (uint)cmdList.VtxBuffer.Size;
-                indexOffsetInElements += (uint)cmdList.IdxBuffer.Size;
-            }
-
-            this.graphicsContext.UnmapMemory(this.vertexBuffers[0]);
-            this.graphicsContext.UnmapMemory(this.indexBuffer);
-
-            commandBuffer.BeginDebugMarker("ImGUI");
-            commandBuffer.UpdateBufferData(this.constantBuffer, ref this.mvp);
-
-            RenderPassDescription renderPassDescription = new RenderPassDescription(this.framebuffer, ClearValue.None);
-            commandBuffer.BeginRenderPass(ref renderPassDescription);
-
-            // Bind resources
-            commandBuffer.SetGraphicsPipelineState(this.pipelineState);
-            commandBuffer.SetVertexBuffers(this.vertexBuffers);
-            commandBuffer.SetIndexBuffer(this.indexBuffer, IndexFormat.UInt16);
-
-            drawData.ScaleClipRects(this.io.DisplayFramebufferScale);
-
-            // Render command lists
-            uint vtx_offset = 0;
-            uint idx_offset = 0;
-
-            for (int n = 0; n < drawData.CmdListsCount; n++)
-            {
-                ImGuiNET.ImDrawListPtr cmdList = drawData.CmdListsRange[n];
-                for (int i = 0; i < cmdList.CmdBuffer.Size; i++)
+                // Resize index and vertex buffers.
+                int vertexBufferSize = drawData->TotalVtxCount * sizeof(ImDrawVert);
+                if (vertexBufferSize > this.vertexBuffers[0].Description.SizeInBytes)
                 {
-                    ImGuiNET.ImDrawCmdPtr cmd = cmdList.CmdBuffer[i];
-                    if (cmd.TextureId != IntPtr.Zero)
-                    {
-                        if (cmd.TextureId == this.fontAtlasID)
-                        {
-                            commandBuffer.SetResourceSet(this.resourceSet);
-                        }
-                        else
-                        {
-                            commandBuffer.SetResourceSet(this.GetImageResourceSet(cmd.TextureId), 1);
-                        }
-                    }
+                    this.vertexBuffers[0].Dispose();
+                    uint nextSize = (uint)MathHelper.NextPowerOfTwo(vertexBufferSize);
+                    var vertexBufferDescription = new BufferDescription(
+                        nextSize,
+                        BufferFlags.VertexBuffer,
+                        ResourceUsage.Dynamic,
+                        ResourceCpuAccess.Write);
 
-                    var scissors = new Rectangle[1]
-                    {
-                        new Rectangle(
-                        (int)cmd.ClipRect.X,
-                        (int)cmd.ClipRect.Y,
-                        (int)(cmd.ClipRect.Z - cmd.ClipRect.X),
-                        (int)(cmd.ClipRect.W - cmd.ClipRect.Y)),
-                    };
-
-                    commandBuffer.SetScissorRectangles(scissors);
-
-                    commandBuffer.DrawIndexedInstanced(cmd.ElemCount, 1, idx_offset, vtx_offset, 0);
-
-                    idx_offset += cmd.ElemCount;
+                    this.vertexBuffers[0] = this.graphicsContext.Factory.CreateBuffer(ref vertexBufferDescription);
                 }
 
-                vtx_offset += (uint)cmdList.VtxBuffer.Size;
-            }
+                int indexBufferSize = drawData->TotalIdxCount * sizeof(ushort);
+                if (indexBufferSize > this.indexBuffer.Description.SizeInBytes)
+                {
+                    this.indexBuffer.Dispose();
+                    uint nextSize = (uint)MathHelper.NextPowerOfTwo(indexBufferSize);
+                    var indexBufferDescription = new BufferDescription(
+                        nextSize,
+                        BufferFlags.IndexBuffer,
+                        ResourceUsage.Dynamic,
+                        ResourceCpuAccess.Write);
 
-            commandBuffer.EndDebugMarker();
-            commandBuffer.EndRenderPass();
+                    this.indexBuffer = this.graphicsContext.Factory.CreateBuffer(ref indexBufferDescription);
+                }
+
+                // Update index and vertex buffers.
+                var vResource = this.graphicsContext.MapMemory(this.vertexBuffers[0], MapMode.Write);
+                var iResource = this.graphicsContext.MapMemory(this.indexBuffer, MapMode.Write);
+
+                for (int i = 0; i < drawData->CmdListsCount; i++)
+                {
+                    ImDrawList* cmdList = drawData->CmdLists[i];
+
+                    // Copy vertex
+                    var vOffset = vertexOffsetInVertices * (uint)sizeof(ImDrawVert);
+                    Unsafe.CopyBlock((void*)((long)vResource.Data + vOffset), (void*)cmdList->VtxBuffer.Data, (uint)(cmdList->VtxBuffer.Size * sizeof(ImDrawVert)));
+
+                    // Copy index
+                    var iOffset = indexOffsetInElements * sizeof(ushort);
+                    Unsafe.CopyBlock((void*)((long)iResource.Data + iOffset), (void*)cmdList->IdxBuffer.Data, (uint)(cmdList->IdxBuffer.Size * sizeof(ushort)));
+
+                    vertexOffsetInVertices += (uint)cmdList->VtxBuffer.Size;
+                    indexOffsetInElements += (uint)cmdList->IdxBuffer.Size;
+                }
+
+                this.graphicsContext.UnmapMemory(this.vertexBuffers[0]);
+                this.graphicsContext.UnmapMemory(this.indexBuffer);
+
+                commandBuffer.BeginDebugMarker("ImGUI");
+                commandBuffer.UpdateBufferData(this.constantBuffer, ref this.mvp);
+
+                RenderPassDescription renderPassDescription = new RenderPassDescription(this.framebuffer, ClearValue.None);
+                commandBuffer.BeginRenderPass(ref renderPassDescription);
+
+                // Bind resources
+                commandBuffer.SetGraphicsPipelineState(this.pipelineState);
+                commandBuffer.SetVertexBuffers(this.vertexBuffers);
+                commandBuffer.SetIndexBuffer(this.indexBuffer, IndexFormat.UInt16);
+
+                drawData->ScaleClipRects(this.io->DisplayFramebufferScale);
+
+                // Render command lists
+                uint vtx_offset = 0;
+                uint idx_offset = 0;
+
+                for (int n = 0; n < drawData->CmdListsCount; n++)
+                {
+                    ImDrawList* cmdList = drawData->CmdLists[n];
+                    for (int i = 0; i < cmdList->CmdBuffer.Size; i++)
+                    {
+                        ImDrawCmd* cmd = cmdList->GetDrawCmdAt(i);
+                        if (cmd->TextureId != IntPtr.Zero)
+                        {
+                            if (cmd->TextureId == this.fontAtlasID)
+                            {
+                                commandBuffer.SetResourceSet(this.resourceSet);
+                            }
+                            else
+                            {
+                                commandBuffer.SetResourceSet(this.GetImageResourceSet(cmd->TextureId), 1);
+                            }
+                        }
+
+                        var scissors = new Rectangle[1]
+                        {
+                            new Rectangle(
+                            (int)cmd->ClipRect.X,
+                            (int)cmd->ClipRect.Y,
+                            (int)(cmd->ClipRect.Z - cmd->ClipRect.X),
+                            (int)(cmd->ClipRect.W - cmd->ClipRect.Y)),
+                        };
+
+                        commandBuffer.SetScissorRectangles(scissors);
+
+                        commandBuffer.DrawIndexedInstanced(cmd->ElemCount, 1, idx_offset, vtx_offset, 0);
+
+                        idx_offset += cmd->ElemCount;
+                    }
+
+                    vtx_offset += (uint)cmdList->VtxBuffer.Size;
+                }
+
+                commandBuffer.EndDebugMarker();
+                commandBuffer.EndRenderPass();
+            }
         }
 
         public IntPtr CreateImGuiBinding(Texture texture)
@@ -545,7 +554,7 @@ namespace Common
             this.resourceByTexture.Clear();
             this.resourceById.Clear();
 
-            ImGuiNET.ImGui.DestroyContext();
+            ImguiNative.igDestroyContext(IntPtr.Zero);
             this.vertexBuffers[0].Dispose();
             this.vertexBuffers = null;
             this.indexBuffer.Dispose();

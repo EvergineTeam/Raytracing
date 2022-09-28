@@ -15,7 +15,7 @@ using Foundation;
 using CoreGraphics;
 #endif
 
-namespace Evergine.Framework.Assets.Extensions
+namespace Common.Images
 {
     public static class ImageHelpers
     {

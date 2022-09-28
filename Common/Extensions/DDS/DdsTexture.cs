@@ -28,7 +28,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using Evergine.Framework.Assets.Extensions;
 
-namespace Evergine.Assets.Extensions.DDS
+namespace Common.Images.DDS
 {
     internal class DdsTexture
     {

@@ -3,7 +3,7 @@
 using System.IO;
 using Evergine.Common.Graphics;
 
-namespace VisualTests.LowLevel.Images
+namespace Common.Images
 {
     public interface IDecoder
     {

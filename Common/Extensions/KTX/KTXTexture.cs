@@ -6,7 +6,7 @@ using System.IO;
 using System.Text;
 using Evergine.Framework.Assets.Extensions;
 
-namespace Evergine.Assets.Extensions.KTX
+namespace Common.Images.KTX
 {
     /// <summary>
     /// https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec.

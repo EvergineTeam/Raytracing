@@ -2,7 +2,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace Evergine.Assets.Extensions.KTX
+namespace Common.Images.KTX
 {
     /// <summary>
     /// KTX header description.
