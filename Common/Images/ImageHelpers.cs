@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Evergine.Common.Graphics;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
 
 #if IOS
@@ -225,29 +226,30 @@ namespace Common.Images
             dataLength = image.Width * image.Height * bytesPerPixel;
             var data = new byte[dataLength];
             var dataPixels = MemoryMarshal.Cast<byte, Rgba32>(data);
-            if (image.TryGetSinglePixelSpan(out var pixels))
+
+            if (image.DangerousTryGetSinglePixelMemory(out var pixels))
             {
                 if (premultiplyAlpha)
                 {
-                    CopyToPremultiplied(pixels, dataPixels);
+                    CopyToPremultiplied(pixels.Span, dataPixels);
                 }
                 else
                 {
-                    pixels.CopyTo(dataPixels);
+                    pixels.Span.CopyTo(dataPixels);
                 }
             }
             else
             {
                 for (int i = 0; i < image.Height; i++)
                 {
-                    var row = image.GetPixelRowSpan(i);
+                    var row = image.DangerousGetPixelRowMemory(i);
                     if (premultiplyAlpha)
                     {
-                        CopyToPremultiplied(row, dataPixels.Slice(i * image.Width, image.Width));
+                        CopyToPremultiplied(row.Span, dataPixels.Slice(i * image.Width, image.Width));
                     }
                     else
                     {
-                        row.CopyTo(dataPixels.Slice(i * image.Width, image.Width));
+                        row.Span.CopyTo(dataPixels.Slice(i * image.Width, image.Width));
                     }
                 }
             }

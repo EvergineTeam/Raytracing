@@ -234,33 +234,33 @@ namespace Common
             keyboardDispatcher.KeyChar += this.KeyboardDispatcher_KeyChar;
         }
 
-        private void KeyboardDispatcher_KeyChar(object? sender, KeyCharEventArgs e)
+        private void KeyboardDispatcher_KeyChar(object sender, KeyCharEventArgs e)
         {
             this.io->AddInputCharacter(e.Character);
         }
 
-        private void KeyboardDispatcher_KeyUp(object? sender, KeyEventArgs e)
+        private void KeyboardDispatcher_KeyUp(object sender, KeyEventArgs e)
         {
             this.io->KeysDown[(int)e.Key] = 0;
         }
 
-        private void KeyboardDispatcher_KeyDown(object? sender, KeyEventArgs e)
+        private void KeyboardDispatcher_KeyDown(object sender, KeyEventArgs e)
         {
             this.io->KeysDown[(int)e.Key] = 1;
         }
 
-        private void MouseDispatcher_MouseScroll(object? sender, MouseScrollEventArgs e)
+        private void MouseDispatcher_MouseScroll(object sender, MouseScrollEventArgs e)
         {
             this.io->MouseWheel = e.Delta.Y;
         }
 
-        private void MouseDispatcher_MouseMove(object? sender, MouseEventArgs e)
+        private void MouseDispatcher_MouseMove(object sender, MouseEventArgs e)
         {
             this.io->MousePos.X = e.Position.X / this.surface.DPIDensity;
             this.io->MousePos.Y = e.Position.Y / this.surface.DPIDensity;
         }
 
-        private void MouseDispatcher_MouseButtonUp(object? sender, MouseButtonEventArgs e)
+        private void MouseDispatcher_MouseButtonUp(object sender, MouseButtonEventArgs e)
         {
             switch (e.Button)
             {
@@ -278,7 +278,7 @@ namespace Common
             }
         }
 
-        private void MouseDispatcher_MouseButtonDown(object? sender, MouseButtonEventArgs e)
+        private void MouseDispatcher_MouseButtonDown(object sender, MouseButtonEventArgs e)
         {
             switch (e.Button)
             {
