@@ -1,8 +1,8 @@
-﻿using glTFLoader;
+﻿using Evergine.Common.IO;
+using glTFLoader;
 using glTFLoader.Schema;
 using System;
 using System.IO;
-using Evergine.Platform;
 
 namespace Common
 {

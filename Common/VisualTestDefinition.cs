@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Reflection;
 using Evergine.Common.Audio;
 using Evergine.Common.Graphics;
-using Evergine.Platform;
+using Evergine.Common.IO;
 using static Evergine.Common.Graphics.SurfaceInfo;
 
 namespace Common

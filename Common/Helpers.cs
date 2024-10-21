@@ -7,12 +7,12 @@ namespace Common
 {
     public static class Helpers
     {
-        public static Task<ShaderDescription> ReadAndCompileShader(this AssetsDirectoryBase assetsDirectory, GraphicsContext graphicsContext, string hlslFileName, string translateFileName, ShaderStages stage, string entryPoint)
+        public static Task<ShaderDescription> ReadAndCompileShader(this AssetsDirectory assetsDirectory, GraphicsContext graphicsContext, string hlslFileName, string translateFileName, ShaderStages stage, string entryPoint)
         {
             return ReadAndCompileShader(assetsDirectory, graphicsContext, hlslFileName, translateFileName, stage, entryPoint, CompilerParameters.Default);
         }
 
-        public static async Task<ShaderDescription> ReadAndCompileShader(this AssetsDirectoryBase assetsDirectory, GraphicsContext graphicsContext, string hlslFileName, string translateFileName, ShaderStages stage, string entryPoint, CompilerParameters compileParameters)
+        public static async Task<ShaderDescription> ReadAndCompileShader(this AssetsDirectory assetsDirectory, GraphicsContext graphicsContext, string hlslFileName, string translateFileName, ShaderStages stage, string entryPoint, CompilerParameters compileParameters)
         {
             GraphicsBackend backend = graphicsContext.BackendType;
 
@@ -64,7 +64,7 @@ namespace Common
             return description;
         }
 
-        public static Task<string> ReadShaderSource(this AssetsDirectoryBase assetsDirectory, GraphicsContext graphicsContext, string hlslFileName, string translateFileName, string root = null)
+        public static Task<string> ReadShaderSource(this AssetsDirectory assetsDirectory, GraphicsContext graphicsContext, string hlslFileName, string translateFileName, string root = null)
         {
             var backendType = graphicsContext.BackendType;
 
