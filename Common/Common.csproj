@@ -7,11 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Evergine.Common" Version="2024.10.24.7" />
-    <PackageReference Include="Evergine.Mathematics" Version="2024.10.24.7" />
+    <PackageReference Include="Evergine.Common" Version="2025.3.11.551-nightly" />
+    <PackageReference Include="Evergine.Mathematics" Version="2025.3.11.551-nightly" />
     <PackageReference Include="glTF2Loader" Version="1.1.3-alpha" />
-    <PackageReference Include="Evergine.ImGui" Version="2024.10.24.7" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.5" />
+    <PackageReference Include="Evergine.ImGui" Version="2025.3.11.551-nightly" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.7" />
   </ItemGroup>
 
 </Project>
