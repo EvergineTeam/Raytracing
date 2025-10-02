@@ -64,7 +64,7 @@ namespace Common
             IntPtr imGuiContext = ImguiNative.igCreateContext((ImFontAtlas*)null);
             ImguiNative.igSetCurrentContext(imGuiContext);
 
-            this.io = ImguiNative.igGetIO();
+            this.io = ImguiNative.igGetIO_Nil();
             this.io->Fonts->AddFontDefault(null);
 
             // Compile shaders.
@@ -159,7 +159,7 @@ namespace Common
             byte* pixels = null;
             this.io->Fonts->GetTexDataAsRGBA32(&pixels, &width, &height, &bytesPerPixel);
 
-            this.io->Fonts->SetTexID(this.fontAtlasID);
+            this.io->Fonts->SetTexID((ulong)this.fontAtlasID);
 
             var fontTextureDescription = new TextureDescription()
             {
@@ -200,27 +200,6 @@ namespace Common
 
             this.io->Fonts->ClearTexData();
 
-            // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array that we will update during the application lifetime.
-            this.io->KeyMap[(int)ImGuiKey.Tab] = (int)Keys.Tab;
-            this.io->KeyMap[(int)ImGuiKey.LeftArrow] = (int)Keys.Left;
-            this.io->KeyMap[(int)ImGuiKey.RightArrow] = (int)Keys.Right;
-            this.io->KeyMap[(int)ImGuiKey.UpArrow] = (int)Keys.Up;
-            this.io->KeyMap[(int)ImGuiKey.DownArrow] = (int)Keys.Down;
-            this.io->KeyMap[(int)ImGuiKey.PageUp] = (int)Keys.PageUp;
-            this.io->KeyMap[(int)ImGuiKey.PageDown] = (int)Keys.PageDown;
-            this.io->KeyMap[(int)ImGuiKey.Home] = (int)Keys.Home;
-            this.io->KeyMap[(int)ImGuiKey.End] = (int)Keys.End;
-            this.io->KeyMap[(int)ImGuiKey.Delete] = (int)Keys.Delete;
-            this.io->KeyMap[(int)ImGuiKey.Backspace] = (int)Keys.Back;
-            this.io->KeyMap[(int)ImGuiKey.Enter] = (int)Keys.Enter;
-            this.io->KeyMap[(int)ImGuiKey.Escape] = (int)Keys.Escape;
-            this.io->KeyMap[(int)ImGuiKey.A] = (int)Keys.A;
-            this.io->KeyMap[(int)ImGuiKey.C] = (int)Keys.C;
-            this.io->KeyMap[(int)ImGuiKey.V] = (int)Keys.V;
-            this.io->KeyMap[(int)ImGuiKey.X] = (int)Keys.X;
-            this.io->KeyMap[(int)ImGuiKey.Y] = (int)Keys.Y;
-            this.io->KeyMap[(int)ImGuiKey.Z] = (int)Keys.Z;
-
             // Register input events
             var mouseDispatcher = this.surface.MouseDispatcher;
             mouseDispatcher.MouseButtonDown += this.MouseDispatcher_MouseButtonDown;
@@ -241,12 +220,18 @@ namespace Common
 
         private void KeyboardDispatcher_KeyUp(object sender, KeyEventArgs e)
         {
-            this.io->KeysDown[(int)e.Key] = 0;
+            if (this.TryMapKey(e.Key, out ImGuiKey imguiKey))
+            {
+                this.io->AddKeyEvent(imguiKey, false);
+            }
         }
 
         private void KeyboardDispatcher_KeyDown(object sender, KeyEventArgs e)
         {
-            this.io->KeysDown[(int)e.Key] = 1;
+            if (this.TryMapKey(e.Key, out ImGuiKey imguiKey))
+            {
+                this.io->AddKeyEvent(imguiKey, true);
+            }
         }
 
         private void MouseDispatcher_MouseScroll(object sender, MouseScrollEventArgs e)
@@ -421,20 +406,21 @@ namespace Common
                 var vResource = this.graphicsContext.MapMemory(this.vertexBuffers[0], MapMode.Write);
                 var iResource = this.graphicsContext.MapMemory(this.indexBuffer, MapMode.Write);
 
+                ImVector<IntPtr> cmdList = new ImVector<IntPtr>(drawData->CmdLists);
                 for (int i = 0; i < drawData->CmdListsCount; i++)
                 {
-                    ImDrawList* cmdList = drawData->CmdLists[i];
+                    ImDrawList* cmdListPtr = (ImDrawList*)cmdList[i];
 
                     // Copy vertex
                     var vOffset = vertexOffsetInVertices * (uint)sizeof(ImDrawVert);
-                    Unsafe.CopyBlock((void*)((long)vResource.Data + vOffset), (void*)cmdList->VtxBuffer.Data, (uint)(cmdList->VtxBuffer.Size * sizeof(ImDrawVert)));
+                    Unsafe.CopyBlock((void*)((long)vResource.Data + vOffset), (void*)cmdListPtr->VtxBuffer.Data, (uint)(cmdListPtr->VtxBuffer.Size * sizeof(ImDrawVert)));
 
                     // Copy index
                     var iOffset = indexOffsetInElements * sizeof(ushort);
-                    Unsafe.CopyBlock((void*)((long)iResource.Data + iOffset), (void*)cmdList->IdxBuffer.Data, (uint)(cmdList->IdxBuffer.Size * sizeof(ushort)));
+                    Unsafe.CopyBlock((void*)((long)iResource.Data + iOffset), (void*)cmdListPtr->IdxBuffer.Data, (uint)(cmdListPtr->IdxBuffer.Size * sizeof(ushort)));
 
-                    vertexOffsetInVertices += (uint)cmdList->VtxBuffer.Size;
-                    indexOffsetInElements += (uint)cmdList->IdxBuffer.Size;
+                    vertexOffsetInVertices += (uint)cmdListPtr->VtxBuffer.Size;
+                    indexOffsetInElements += (uint)cmdListPtr->IdxBuffer.Size;
                 }
 
                 this.graphicsContext.UnmapMemory(this.vertexBuffers[0]);
@@ -459,19 +445,19 @@ namespace Common
 
                 for (int n = 0; n < drawData->CmdListsCount; n++)
                 {
-                    ImDrawList* cmdList = drawData->CmdLists[n];
-                    for (int i = 0; i < cmdList->CmdBuffer.Size; i++)
+                    ImDrawList* cmdListPtr = (ImDrawList*)cmdList[n];
+                    for (int i = 0; i < cmdListPtr->CmdBuffer.Size; i++)
                     {
-                        ImDrawCmd* cmd = cmdList->GetDrawCmdAt(i);
-                        if (cmd->TextureId != IntPtr.Zero)
+                        ImDrawCmd* cmd = (ImDrawCmd*)((long)cmdListPtr->CmdBuffer.Data + (i * sizeof(ImDrawCmd)));
+                        if (cmd->TextureId != (ulong)IntPtr.Zero)
                         {
-                            if (cmd->TextureId == this.fontAtlasID)
+                            if (cmd->TextureId == (ulong)this.fontAtlasID)
                             {
                                 commandBuffer.SetResourceSet(this.resourceSet);
                             }
                             else
                             {
-                                commandBuffer.SetResourceSet(this.GetImageResourceSet(cmd->TextureId), 1);
+                                commandBuffer.SetResourceSet(this.GetImageResourceSet((nint)cmd->TextureId), 1);
                             }
                         }
 
@@ -491,7 +477,7 @@ namespace Common
                         idx_offset += cmd->ElemCount;
                     }
 
-                    vtx_offset += (uint)cmdList->VtxBuffer.Size;
+                    vtx_offset += (uint)cmdListPtr->VtxBuffer.Size;
                 }
 
                 commandBuffer.EndDebugMarker();
@@ -542,6 +528,90 @@ namespace Common
             }
 
             return null;
+        }
+
+        private bool TryMapKey(Keys key, out ImGuiKey result)
+        {
+            ImGuiKey KeyToImGuiKeyShortcut(Keys keyToConvert, Keys startKey1, ImGuiKey startKey2)
+            {
+                int changeFromStart1 = (int)keyToConvert - (int)startKey1;
+                return startKey2 + changeFromStart1;
+            }
+
+            if (key >= Keys.F1 && key <= Keys.F24)
+            {
+                result = KeyToImGuiKeyShortcut(key, Keys.F1, ImGuiKey.F1);
+            }
+            else if (key >= Keys.D0 && key <= Keys.D9)
+            {
+                result = KeyToImGuiKeyShortcut(key, Keys.D0, ImGuiKey.Keypad0);
+            }
+            else if (key >= Keys.A && key <= Keys.Z)
+            {
+                result = KeyToImGuiKeyShortcut(key, Keys.A, ImGuiKey.A);
+            }
+            else if (key >= Keys.NumPad0 && key <= Keys.NumPad9)
+            {
+                result = KeyToImGuiKeyShortcut(key, Keys.NumPad0, ImGuiKey._0);
+            }
+            else if (key == Keys.LeftShift || key == Keys.RightShift)
+            {
+                result = ImGuiKey.ImGuiMod_Shift;
+            }
+            else if (key == Keys.LeftControl || key == Keys.RightControl)
+            {
+                result = ImGuiKey.ImGuiMod_Ctrl;
+            }
+            else if (key == Keys.LeftAlt || key == Keys.RightAlt)
+            {
+                result = ImGuiKey.ImGuiMod_Alt;
+            }
+            else if (key == Keys.LeftWindows || key == Keys.RightWindows)
+            {
+                result = ImGuiKey.ImGuiMod_Super;
+            }
+            else
+            {
+                switch (key)
+                {
+                    case Keys.Up: result = ImGuiKey.UpArrow; break;
+                    case Keys.Down: result = ImGuiKey.DownArrow; break;
+                    case Keys.Left: result = ImGuiKey.LeftArrow; break;
+                    case Keys.Right: result = ImGuiKey.RightArrow; break;
+                    case Keys.Enter: result = ImGuiKey.Enter; break;
+                    case Keys.Escape: result = ImGuiKey.Escape; break;
+                    case Keys.Space: result = ImGuiKey.Space; break;
+                    case Keys.Tab: result = ImGuiKey.Tab; break;
+                    case Keys.Back: result = ImGuiKey.Backspace; break;
+                    case Keys.Insert: result = ImGuiKey.Insert; break;
+                    case Keys.Delete: result = ImGuiKey.Delete; break;
+                    case Keys.PageUp: result = ImGuiKey.PageUp; break;
+                    case Keys.PageDown: result = ImGuiKey.PageDown; break;
+                    case Keys.Home: result = ImGuiKey.Home; break;
+                    case Keys.End: result = ImGuiKey.End; break;
+                    case Keys.CapsLock: result = ImGuiKey.CapsLock; break;
+                    case Keys.Scroll: result = ImGuiKey.ScrollLock; break;
+                    case Keys.PrintScreen: result = ImGuiKey.PrintScreen; break;
+                    case Keys.Pause: result = ImGuiKey.Pause; break;
+                    case Keys.NumLock: result = ImGuiKey.NumLock; break;
+                    case Keys.Divide: result = ImGuiKey.KeypadDivide; break;
+                    case Keys.Multiply: result = ImGuiKey.KeypadMultiply; break;
+                    case Keys.Subtract: result = ImGuiKey.KeypadSubtract; break;
+                    case Keys.Add: result = ImGuiKey.KeypadAdd; break;
+                    case Keys.Decimal: result = ImGuiKey.KeypadDecimal; break;
+                    case Keys.OemTilde: result = ImGuiKey.GraveAccent; break;
+                    case Keys.OemMinus: result = ImGuiKey.Minus; break;
+                    case Keys.OemPlus: result = ImGuiKey.Equal; break;
+                    case Keys.OemSemicolon: result = ImGuiKey.Semicolon; break;
+                    case Keys.OemQuotes: result = ImGuiKey.Apostrophe; break;
+                    case Keys.OemComma: result = ImGuiKey.Comma; break;
+                    case Keys.OemPeriod: result = ImGuiKey.Period; break;
+                    case Keys.OemBackslash: result = ImGuiKey.Backslash; break;
+                    default: result = ImGuiKey.None; break;
+                }
+            }
+
+            return result != ImGuiKey.None;
         }
 
         public void Dispose()
