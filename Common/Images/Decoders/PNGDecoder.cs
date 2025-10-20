@@ -86,7 +86,7 @@ namespace Common.Images
                     data = ImageHelpers.GetImageArray(image, true, out _);
                 }
 
-                uint formatSize = description.pixelFormat.GetSizeInBits() / 8;
+                uint formatSize = description.pixelFormat.GetSizeInBytes();
                 databoxes = new DataBox[] { new DataBox(data, description.Width * formatSize, description.Width * description.Height * formatSize) };
             }
             else
