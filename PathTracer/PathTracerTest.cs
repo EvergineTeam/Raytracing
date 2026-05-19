@@ -657,9 +657,12 @@ namespace PathTracer
 
         protected override void InternalDrawCallback(TimeSpan gameTime)
         {
+            var swapchainTex = this.swapChain.GetCurrentFramebufferTexture();
             var commandBuffer = this.graphicCommandQueue.CommandBuffer();
 
             commandBuffer.Begin();
+
+            commandBuffer.Barrier(new Texture.Barrier(this.output, Texture.StateFlags.UnorderedAccess));
 
             //Update Top Level
             var currentHash = this.GetWorldInfoHash();
@@ -690,7 +693,13 @@ namespace PathTracer
                 this.pathTracerSampleIndex++;
             }
 
-            commandBuffer.Blit(this.output, this.swapChain.GetCurrentFramebufferTexture());
+            commandBuffer.Barrier(new Texture.Barrier[]
+            {
+                new Texture.Barrier(this.output, Texture.StateFlags.CopySrc),
+                new Texture.Barrier(swapchainTex, Texture.StateFlags.CopyDst),
+            });
+
+            commandBuffer.Blit(this.output, swapchainTex);
 
             this.DrawUI(commandBuffer, gameTime);
 

@@ -16,11 +16,9 @@ namespace Common
         private Buffer[] vertexBuffers;
         private Buffer indexBuffer;
         private Buffer constantBuffer;
-        private Texture fontTexture;
         private SamplerState sampler;
         private GraphicsPipelineState pipelineState;
         private ResourceLayout layout;
-        private ResourceSet resourceSet;
         private ImGuiIO* io;
 
         private int windowWidth;
@@ -580,6 +578,8 @@ namespace Common
                     var width = texData->Width;
                     var height = texData->Height;
                     var bytesPerPixel = texData->BytesPerPixel;
+                    uint rowPitch = (uint)(bytesPerPixel * width);
+                    uint slicePitch = rowPitch * (uint)height;
 
                     var textureDescription = new TextureDescription()
                     {
@@ -587,17 +587,17 @@ namespace Common
                         Width = (uint)width,
                         Height = (uint)height,
                         Format = PixelFormat.R8G8B8A8_UNorm,
-                        Usage = ResourceUsage.Default,
+                        Usage = ResourceUsage.Immutable,
                         Depth = 1,
                         ArraySize = 1,
                         MipLevels = 1,
                         SampleCount = TextureSampleCount.None,
-                        CpuAccess = ResourceCpuAccess.Write,
+                        CpuAccess = ResourceCpuAccess.None,
                         Flags = TextureFlags.ShaderResource,
                     };
 
-                    var gpuTexture = this.graphicsContext.Factory.CreateTexture(ref textureDescription);
-                    this.graphicsContext.UpdateTextureData(gpuTexture, (IntPtr)pixels, (uint)(bytesPerPixel * width * height), 0);
+                    var textureData = new[] { new DataBox((IntPtr)pixels, rowPitch, slicePitch) };
+                    var gpuTexture = this.graphicsContext.Factory.CreateTexture(textureData, ref textureDescription);
 
                     var resourceSetDescription = new ResourceSetDescription(this.layout, this.constantBuffer, gpuTexture, this.sampler);
                     var newResourceSet = this.graphicsContext.Factory.CreateResourceSet(ref resourceSetDescription);
@@ -614,12 +614,48 @@ namespace Common
                 else if (texData->Status == ImTextureStatus.WantUpdates)
                 {
                     var key = (IntPtr)texData;
+                    IntPtr texId = (IntPtr)texData->GetTexID();
                     if (this.texDataGpuTextures.TryGetValue(key, out var gpuTexture))
                     {
-                        var pixels = (byte*)texData->GetPixels();
-                        var bytesPerPixel = texData->BytesPerPixel;
-                        this.graphicsContext.UpdateTextureData(gpuTexture, (IntPtr)pixels, (uint)(bytesPerPixel * texData->Width * texData->Height), 0);
+                        gpuTexture.Dispose();
+                        this.texDataGpuTextures.Remove(key);
                     }
+
+                    if (this.resourceById.TryGetValue(texId, out var info))
+                    {
+                        info.ResourceSet.Dispose();
+                        this.resourceById.Remove(texId);
+                    }
+
+                    var pixels = (byte*)texData->GetPixels();
+                    var width = texData->Width;
+                    var height = texData->Height;
+                    var bytesPerPixel = texData->BytesPerPixel;
+                    uint rowPitch = (uint)(bytesPerPixel * width);
+                    uint slicePitch = rowPitch * (uint)height;
+
+                    var textureDescription = new TextureDescription()
+                    {
+                        Type = TextureType.Texture2D,
+                        Width = (uint)width,
+                        Height = (uint)height,
+                        Format = PixelFormat.R8G8B8A8_UNorm,
+                        Usage = ResourceUsage.Immutable,
+                        Depth = 1,
+                        ArraySize = 1,
+                        MipLevels = 1,
+                        SampleCount = TextureSampleCount.None,
+                        CpuAccess = ResourceCpuAccess.None,
+                        Flags = TextureFlags.ShaderResource,
+                    };
+
+                    var textureData = new[] { new DataBox((IntPtr)pixels, rowPitch, slicePitch) };
+                    var newTexture = this.graphicsContext.Factory.CreateTexture(textureData, ref textureDescription);
+                    var resourceSetDescription = new ResourceSetDescription(this.layout, this.constantBuffer, newTexture, this.sampler);
+                    var newResourceSet = this.graphicsContext.Factory.CreateResourceSet(ref resourceSetDescription);
+
+                    this.resourceById[texId] = new ResourceSetInfo(texId, newResourceSet);
+                    this.texDataGpuTextures[key] = newTexture;
 
                     texData->SetStatus(ImTextureStatus.OK);
                 }
@@ -668,7 +704,6 @@ namespace Common
             this.constantBuffer.Dispose();
             this.layout.Dispose();
             this.sampler.Dispose();
-            this.fontTexture?.Dispose();
         }
     }
 }
