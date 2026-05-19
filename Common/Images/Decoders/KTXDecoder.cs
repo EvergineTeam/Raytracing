@@ -4,7 +4,6 @@ using System;
 using System.IO;
 using Common.Images.KTX;
 using Evergine.Common.Graphics;
-using Evergine.Framework.Assets.Extensions;
 
 namespace Common.Images
 {
@@ -48,7 +47,7 @@ namespace Common.Images
         /// <param name="description">Image description.</param>
         public unsafe void DecodeHeader(BinaryReader reader, out ImageDescription description)
         {
-            KTXHeader header = ImageHelpers.ReadStruct<KTXHeader>(reader);
+            KTXHeader header = ImageHelpers.ReadUnmanaged<KTXHeader>(reader);
 
             description = new ImageDescription()
             {
@@ -99,9 +98,8 @@ namespace Common.Images
                     {
                         var face = slice.Faces[faceIndex];
 
-                        uint formatSize = description.pixelFormat.GetSizeInBytes();
-                        uint rowPitch = (uint)level.Width * formatSize;
-                        uint slicePitch = (uint)face.Data.Length;                        
+                        uint rowPitch = description.pixelFormat.GetSizeInBytes(level.Width);
+                        uint slicePitch = (uint)face.Data.Length;
                         int sliceIndexCalculated = (sliceIndex * slice.Faces.Length) + faceIndex;
                         int index = (sliceIndexCalculated * (int)description.MipLevels) + mipmapIndex;
 

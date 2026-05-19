@@ -14,12 +14,12 @@ namespace Common.Images.KTX
     public class KTXTexture
     {
         /// <summary>
-        /// Gets the KTX Header.
+        /// Gets the KTX header.
         /// </summary>
         public KTXHeader Header { get; }
 
         /// <summary>
-        /// Gets the KTX keyvalue pairs.
+        /// Gets the KTX key-value pairs.
         /// </summary>
         public KTXKeyValuePair[] KeyValuePairs { get; }
 
@@ -31,8 +31,8 @@ namespace Common.Images.KTX
         /// <summary>
         /// Initializes a new instance of the <see cref="KTXTexture"/> class.
         /// </summary>
-        /// <param name="header">The ktx header.</param>
-        /// <param name="keyValuePairs">The key value pairs.</param>
+        /// <param name="header">The KTX header.</param>
+        /// <param name="keyValuePairs">The key-value pairs.</param>
         /// <param name="mipmaps">The mipmaps.</param>
         public KTXTexture(KTXHeader header, KTXKeyValuePair[] keyValuePairs, KTXMipmapLevel[] mipmaps)
         {
@@ -45,11 +45,11 @@ namespace Common.Images.KTX
         /// Loads the texture.
         /// </summary>
         /// <param name="reader">The binary reader.</param>
-        /// <param name="readKeyValuePairs">The key value pairs.</param>
+        /// <param name="readKeyValuePairs">The key-value pairs.</param>
         /// <returns>The KTX texture.</returns>
         public static KTXTexture Load(BinaryReader reader, bool readKeyValuePairs)
         {
-            KTXHeader header = ImageHelpers.ReadStruct<KTXHeader>(reader);
+            KTXHeader header = ImageHelpers.ReadUnmanaged<KTXHeader>(reader);
 
             KTXKeyValuePair[] kvps = null;
 

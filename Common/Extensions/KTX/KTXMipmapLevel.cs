@@ -3,12 +3,12 @@
 namespace Common.Images.KTX
 {
     /// <summary>
-    /// For each mipmap level in numberOfMipmapLevels.
+    /// For each mipmap level in the numberOfMipmapLevels.
     /// </summary>
     public class KTXMipmapLevel
     {
         /// <summary>
-        /// Gets the mip map width.
+        /// Gets the mipmap width.
         /// </summary>
         public uint Width { get; }
 
@@ -23,17 +23,17 @@ namespace Common.Images.KTX
         public uint Depth { get; }
 
         /// <summary>
-        /// Gets the mipmap total size.
+        /// Gets the total mipmap size.
         /// </summary>
         public uint TotalSize { get; }
 
         /// <summary>
-        /// Gets the array element size.
+        /// Gets the size of the array element.
         /// </summary>
         public uint ArrayElementSize { get; }
 
         /// <summary>
-        /// Getsthe array elements.
+        /// Gets the array elements.
         /// </summary>
         public KTXArrayElement[] ArrayElements { get; }
 
@@ -44,7 +44,7 @@ namespace Common.Images.KTX
         /// <param name="height">The height.</param>
         /// <param name="depth">The depth.</param>
         /// <param name="totalSize">The total size.</param>
-        /// <param name="arraySliceSize">The array slize size.</param>
+        /// <param name="arraySliceSize">The array slice size.</param>
         /// <param name="slices">The slices.</param>
         public KTXMipmapLevel(uint width, uint height, uint depth, uint totalSize, uint arraySliceSize, KTXArrayElement[] slices)
         {

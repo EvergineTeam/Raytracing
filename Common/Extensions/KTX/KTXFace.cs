@@ -8,14 +8,14 @@ namespace Common.Images.KTX
     public class KTXFace
     {
         /// <summary>
-        /// Gets the ktx face data.
+        /// Gets the KTX face data.
         /// </summary>
         public byte[] Data { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="KTXFace"/> class.
         /// </summary>
-        /// <param name="data">The ktx face data.</param>
+        /// <param name="data">The KTX face data.</param>
         public KTXFace(byte[] data)
         {
             this.Data = data;

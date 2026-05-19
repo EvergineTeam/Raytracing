@@ -29,7 +29,7 @@ RWTexture2D<float4> gOutput : register(u0);
 
 
 StructuredBuffer<int> Indices : register(t1);
-StructuredBuffer<float3> Normals : register(t2);
+StructuredBuffer<float> Normals : register(t2);
 StructuredBuffer<float2> Texcoords : register(t3);
 
 Texture2D DiffuseTexture : register(t4);
@@ -445,6 +445,21 @@ float3 getCosHemisphereSample(inout uint randSeed, float3 hitNorm)
 	return tangent * (r * cos(phi).x) + bitangent * (r * sin(phi)) + hitNorm.xyz * sqrt(1 - randVal.x);
 }
 
+float3 calcHitNormal(uint3 indices, float3 interpolationFactors)
+{
+	int i0 = indices[0];
+	int i1 = indices[1];
+	int i2 = indices[2];
+	float3 vertexNormals[3] =
+	{
+		float3(Normals[3 * i0], Normals[3 * i0 + 1], Normals[3 * i0 + 2]),
+		float3(Normals[3 * i1], Normals[3 * i1 + 1], Normals[3 * i1 + 2]),
+		float3(Normals[3 * i2], Normals[3 * i2 + 1], Normals[3 * i2 + 2]),
+	};
+
+	return BarycentricInterpolation(vertexNormals[0], vertexNormals[1], vertexNormals[2], interpolationFactors);
+}
+
 [shader("closesthit")]
 void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
@@ -460,7 +475,7 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 	float3 interpolationFactors = CalculateBarycentricalInterpolationFactors(attribs.barycentrics);
 
 	// Hit Normals
-	float3 hitNormal = BarycentricInterpolation(Normals[indices[0]], Normals[indices[1]], Normals[indices[2]], interpolationFactors);
+	float3 hitNormal = calcHitNormal(indices, interpolationFactors);
 
 	// Shadow
 
@@ -552,7 +567,7 @@ void GIHit(inout GIRayPayload payload, in BuiltInTriangleIntersectionAttributes 
 	float3 interpolationFactors = CalculateBarycentricalInterpolationFactors(attribs.barycentrics);
 
 	// Hit Normals
-	float3 hitNormal = BarycentricInterpolation(Normals[indices[0]], Normals[indices[1]], Normals[indices[2]], interpolationFactors);
+	float3 hitNormal = calcHitNormal(indices, interpolationFactors);
 
 	// Hit Texcoords
 	float2 hitUV = BarycentricInterpolation(Texcoords[indices[0]], Texcoords[indices[1]], Texcoords[indices[2]], interpolationFactors);

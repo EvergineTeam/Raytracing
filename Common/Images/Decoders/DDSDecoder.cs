@@ -77,7 +77,7 @@ namespace Common.Images
         /// <param name="description">Image description.</param>
         public void DecodeHeader(BinaryReader reader, out ImageDescription description)
         {
-            Header header = ImageHelpers.ReadStruct<Header>(reader);
+            Header header = ImageHelpers.ReadUnmanaged<Header>(reader);
 
             DxgiFormat dxgiFormat;
             D3DFormat d3dFormat = D3DFormat.Unknown;

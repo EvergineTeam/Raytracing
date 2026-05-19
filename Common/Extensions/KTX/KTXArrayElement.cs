@@ -15,7 +15,7 @@ namespace Common.Images.KTX
         /// <summary>
         /// Initializes a new instance of the <see cref="KTXArrayElement"/> class.
         /// </summary>
-        /// <param name="faces">The ktx faces.</param>
+        /// <param name="faces">The KTX faces.</param>
         public KTXArrayElement(KTXFace[] faces)
         {
             this.Faces = faces;

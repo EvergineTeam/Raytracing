@@ -321,13 +321,13 @@ namespace PathTracer
             // ResourceLayout
             ResourceLayoutDescription layoutDescription = new ResourceLayoutDescription(
                                     new LayoutElementDescription(0, ResourceType.ConstantBuffer, ShaderStages.RayGeneration | ShaderStages.Miss | ShaderStages.ClosestHit),
-                                    new LayoutElementDescription(0, ResourceType.TextureReadWrite, ShaderStages.RayGeneration),
+                                    new LayoutElementDescription(0, ResourceType.TextureViewReadWrite, ShaderStages.RayGeneration),
                                     new LayoutElementDescription(0, ResourceType.AccelerationStructure, ShaderStages.RayGeneration | ShaderStages.ClosestHit),
                                     new LayoutElementDescription(1, ResourceType.StructuredBuffer, ShaderStages.RayGeneration | ShaderStages.ClosestHit),
                                     new LayoutElementDescription(2, ResourceType.StructuredBuffer, ShaderStages.RayGeneration | ShaderStages.ClosestHit),
                                     new LayoutElementDescription(3, ResourceType.StructuredBuffer, ShaderStages.RayGeneration | ShaderStages.ClosestHit),
-                                    new LayoutElementDescription(4, ResourceType.Texture, ShaderStages.RayGeneration | ShaderStages.ClosestHit),
-                                    new LayoutElementDescription(5, ResourceType.Texture, ShaderStages.RayGeneration | ShaderStages.ClosestHit),
+                                    new LayoutElementDescription(4, ResourceType.TextureView, ShaderStages.RayGeneration | ShaderStages.ClosestHit),
+                                    new LayoutElementDescription(5, ResourceType.TextureView, ShaderStages.RayGeneration | ShaderStages.ClosestHit),
                                     new LayoutElementDescription(0, ResourceType.Sampler, ShaderStages.RayGeneration | ShaderStages.ClosestHit)
                                     );
             ResourceLayout resourcesLayout = this.graphicsContext.Factory.CreateResourceLayout(ref layoutDescription);            
@@ -504,7 +504,6 @@ namespace PathTracer
                 Depth = 1,
                 MipLevels = 1,
                 ArraySize = 1,
-                Faces = 1,
                 CpuAccess = ResourceCpuAccess.None,
                 SampleCount = TextureSampleCount.None,
             };

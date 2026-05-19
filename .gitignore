@@ -333,3 +333,4 @@ EvergineContent.cs
 !**/Content/**/*.obj
 **/wwwroot/lib/
 **/wwwroot/evergine/
+.dotnet-home

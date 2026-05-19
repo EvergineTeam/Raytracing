@@ -1,4 +1,4 @@
-﻿using Evergine.Bindings.Imgui;
+using Evergine.Bindings.Imgui;
 using Evergine.Common.Graphics;
 using Evergine.Common.Input.Keyboard;
 using Evergine.Common.Input.Mouse;
@@ -47,6 +47,7 @@ namespace Common
 
         private readonly Dictionary<Texture, ResourceSetInfo> resourceByTexture = new Dictionary<Texture, ResourceSetInfo>();
         private readonly Dictionary<IntPtr, ResourceSetInfo> resourceById = new Dictionary<IntPtr, ResourceSetInfo>();
+        private readonly Dictionary<IntPtr, Texture> texDataGpuTextures = new Dictionary<IntPtr, Texture>();
 
         public ImGuiRenderer(GraphicsContext context, Surface surface, FrameBuffer fb)
         {
@@ -66,12 +67,11 @@ namespace Common
 
             this.io = ImguiNative.igGetIO_Nil();
             this.io->Fonts->AddFontDefault(null);
+            this.io->BackendFlags |= ImGuiBackendFlags.RendererHasTextures;
 
-            // Compile shaders.
             var vsCode = this.NativeAPICompiler(ShaderStages.Vertex);
             var psCode = this.NativeAPICompiler(ShaderStages.Pixel);
 
-            // Create native resources
             var vertexShaderDescription = new ShaderDescription(ShaderStages.Vertex, "VS", vsCode);
             var pixelShaderDescription = new ShaderDescription(ShaderStages.Pixel, "PS", psCode);
 
@@ -108,7 +108,6 @@ namespace Common
 
             this.layout = this.graphicsContext.Factory.CreateResourceLayout(ref layoutDescription);
 
-            // Create pipeline
             var blendState = BlendStates.AlphaBlend;
             blendState.AlphaToCoverageEnable = false;
             blendState.RenderTarget0.BlendEnable = true;
@@ -152,33 +151,6 @@ namespace Common
             var constantBufferDescription = new BufferDescription((uint)Unsafe.SizeOf<Matrix4x4>(), BufferFlags.ConstantBuffer, ResourceUsage.Default);
             this.constantBuffer = this.graphicsContext.Factory.CreateBuffer(ref constantBufferDescription);
 
-            // Create Font Texture
-            int width;
-            int height;
-            int bytesPerPixel;
-            byte* pixels = null;
-            this.io->Fonts->GetTexDataAsRGBA32(&pixels, &width, &height, &bytesPerPixel);
-
-            this.io->Fonts->SetTexID((ulong)this.fontAtlasID);
-
-            var fontTextureDescription = new TextureDescription()
-            {
-                Type = TextureType.Texture2D,
-                Width = (uint)width,
-                Height = (uint)height,
-                Format = PixelFormat.R8G8B8A8_UNorm,
-                Usage = ResourceUsage.Default,
-                Depth = 1,
-                ArraySize = 1,
-                MipLevels = 1,
-                SampleCount = TextureSampleCount.None,
-                CpuAccess = ResourceCpuAccess.Write,
-                Flags = TextureFlags.ShaderResource,
-            };
-
-            this.fontTexture = this.graphicsContext.Factory.CreateTexture(ref fontTextureDescription);
-            this.graphicsContext.UpdateTextureData(this.fontTexture, (IntPtr)pixels, (uint)(bytesPerPixel * width * height), 0);
-
             SamplerStateDescription samplerDescription = new SamplerStateDescription()
             {
                 Filter = TextureFilter.MinLinear_MagLinear_MipLinear,
@@ -194,12 +166,6 @@ namespace Common
 
             this.sampler = this.graphicsContext.Factory.CreateSamplerState(ref samplerDescription);
 
-            var resourceSetDescription = new ResourceSetDescription(this.layout, this.constantBuffer, this.fontTexture, this.sampler);
-            this.resourceSet = this.graphicsContext.Factory.CreateResourceSet(ref resourceSetDescription);
-
-            this.io->Fonts->ClearTexData();
-
-            // Register input events
             var mouseDispatcher = this.surface.MouseDispatcher;
             mouseDispatcher.MouseButtonDown += this.MouseDispatcher_MouseButtonDown;
             mouseDispatcher.MouseButtonUp += this.MouseDispatcher_MouseButtonUp;
@@ -337,13 +303,11 @@ namespace Common
             this.io->DisplayFramebufferScale = this.scaleFactor;
             this.io->DeltaTime = (float)gameTime.TotalSeconds;
 
-            // Read keyboard modifiers input
             var keyboardDispatcher = this.surface.KeyboardDispatcher;
             this.io->KeyCtrl = keyboardDispatcher.IsKeyDown(Keys.LeftControl) ? (byte)1 : (byte)0;
             this.io->KeyShift = keyboardDispatcher.IsKeyDown(Keys.LeftShift) ? (byte)1 : (byte)0;
             this.io->KeyAlt = keyboardDispatcher.IsKeyDown(Keys.LeftAlt) ? (byte)1 : (byte)0;
 
-            // Set orthographics projection matrix
             this.mvp = Matrix4x4.CreateOrthographicOffCenter(
                 0f,
                 this.io->DisplaySize.X,
@@ -358,6 +322,7 @@ namespace Common
                 this.mvp.M22 *= -1;
             }
 
+            this.UpdateTextures();
             ImguiNative.igNewFrame();
         }
 
@@ -372,7 +337,6 @@ namespace Common
 
             if (drawData->CmdListsCount > 0)
             {
-                // Resize index and vertex buffers.
                 int vertexBufferSize = drawData->TotalVtxCount * sizeof(ImDrawVert);
                 if (vertexBufferSize > this.vertexBuffers[0].Description.SizeInBytes)
                 {
@@ -401,7 +365,6 @@ namespace Common
                     this.indexBuffer = this.graphicsContext.Factory.CreateBuffer(ref indexBufferDescription);
                 }
 
-                // Update index and vertex buffers.
                 var vResource = this.graphicsContext.MapMemory(this.vertexBuffers[0], MapMode.Write);
                 var iResource = this.graphicsContext.MapMemory(this.indexBuffer, MapMode.Write);
 
@@ -410,11 +373,9 @@ namespace Common
                 {
                     ImDrawList* cmdListPtr = (ImDrawList*)cmdList[i];
 
-                    // Copy vertex
                     var vOffset = vertexOffsetInVertices * (uint)sizeof(ImDrawVert);
                     Unsafe.CopyBlock((void*)((long)vResource.Data + vOffset), (void*)cmdListPtr->VtxBuffer.Data, (uint)(cmdListPtr->VtxBuffer.Size * sizeof(ImDrawVert)));
 
-                    // Copy index
                     var iOffset = indexOffsetInElements * sizeof(ushort);
                     Unsafe.CopyBlock((void*)((long)iResource.Data + iOffset), (void*)cmdListPtr->IdxBuffer.Data, (uint)(cmdListPtr->IdxBuffer.Size * sizeof(ushort)));
 
@@ -431,16 +392,14 @@ namespace Common
                 RenderPassDescription renderPassDescription = new RenderPassDescription(this.framebuffer, ClearValue.None);
                 commandBuffer.BeginRenderPass(ref renderPassDescription);
 
-                // Bind resources
                 commandBuffer.SetGraphicsPipelineState(this.pipelineState);
                 commandBuffer.SetVertexBuffers(this.vertexBuffers);
                 commandBuffer.SetIndexBuffer(this.indexBuffer, IndexFormat.UInt16);
 
                 drawData->ScaleClipRects(this.io->DisplayFramebufferScale);
 
-                // Render command lists
-                uint vtx_offset = 0;
-                uint idx_offset = 0;
+                uint vtxOffset = 0;
+                uint idxOffset = 0;
 
                 for (int n = 0; n < drawData->CmdListsCount; n++)
                 {
@@ -448,15 +407,13 @@ namespace Common
                     for (int i = 0; i < cmdListPtr->CmdBuffer.Size; i++)
                     {
                         ImDrawCmd* cmd = (ImDrawCmd*)((long)cmdListPtr->CmdBuffer.Data + (i * sizeof(ImDrawCmd)));
-                        if (cmd->TextureId != (ulong)IntPtr.Zero)
+                        ulong texId = cmd->GetTexID();
+                        if (texId != 0)
                         {
-                            if (cmd->TextureId == (ulong)this.fontAtlasID)
+                            var rs = this.GetImageResourceSet((nint)texId);
+                            if (rs != null)
                             {
-                                commandBuffer.SetResourceSet(this.resourceSet);
-                            }
-                            else
-                            {
-                                commandBuffer.SetResourceSet(this.GetImageResourceSet((nint)cmd->TextureId), 1);
+                                commandBuffer.SetResourceSet(rs);
                             }
                         }
 
@@ -470,13 +427,12 @@ namespace Common
                         };
 
                         commandBuffer.SetScissorRectangles(scissors);
+                        commandBuffer.DrawIndexedInstanced(cmd->ElemCount, 1, idxOffset, vtxOffset, 0);
 
-                        commandBuffer.DrawIndexedInstanced(cmd->ElemCount, 1, idx_offset, vtx_offset, 0);
-
-                        idx_offset += cmd->ElemCount;
+                        idxOffset += cmd->ElemCount;
                     }
 
-                    vtx_offset += (uint)cmdListPtr->VtxBuffer.Size;
+                    vtxOffset += (uint)cmdListPtr->VtxBuffer.Size;
                 }
 
                 commandBuffer.EndDebugMarker();
@@ -499,10 +455,6 @@ namespace Common
             return info.ImGuiBinding;
         }
 
-        /// <summary>
-        /// Remove a ImGui texture binding.
-        /// </summary>
-        /// <param name="texture">The texture to remove from binding list.</param>
         public void RemoveImGuiBinding(Texture texture)
         {
             if (this.resourceByTexture.TryGetValue(texture, out ResourceSetInfo info))
@@ -613,6 +565,86 @@ namespace Common
             return result != ImGuiKey.None;
         }
 
+        private void UpdateTextures()
+        {
+            var fonts = this.io->Fonts;
+            var texList = new ImVector<IntPtr>(fonts->TexList);
+
+            for (int i = 0; i < texList.Size; i++)
+            {
+                ImTextureData* texData = (ImTextureData*)texList[i];
+
+                if (texData->Status == ImTextureStatus.WantCreate)
+                {
+                    var pixels = (byte*)texData->GetPixels();
+                    var width = texData->Width;
+                    var height = texData->Height;
+                    var bytesPerPixel = texData->BytesPerPixel;
+
+                    var textureDescription = new TextureDescription()
+                    {
+                        Type = TextureType.Texture2D,
+                        Width = (uint)width,
+                        Height = (uint)height,
+                        Format = PixelFormat.R8G8B8A8_UNorm,
+                        Usage = ResourceUsage.Default,
+                        Depth = 1,
+                        ArraySize = 1,
+                        MipLevels = 1,
+                        SampleCount = TextureSampleCount.None,
+                        CpuAccess = ResourceCpuAccess.Write,
+                        Flags = TextureFlags.ShaderResource,
+                    };
+
+                    var gpuTexture = this.graphicsContext.Factory.CreateTexture(ref textureDescription);
+                    this.graphicsContext.UpdateTextureData(gpuTexture, (IntPtr)pixels, (uint)(bytesPerPixel * width * height), 0);
+
+                    var resourceSetDescription = new ResourceSetDescription(this.layout, this.constantBuffer, gpuTexture, this.sampler);
+                    var newResourceSet = this.graphicsContext.Factory.CreateResourceSet(ref resourceSetDescription);
+
+                    IntPtr texId = i == 0 ? this.fontAtlasID : this.GetNextImGuiBindingID();
+                    texData->SetTexID((ulong)texId);
+
+                    var info = new ResourceSetInfo(texId, newResourceSet);
+                    this.resourceById[texId] = info;
+                    this.texDataGpuTextures[(IntPtr)texData] = gpuTexture;
+
+                    texData->SetStatus(ImTextureStatus.OK);
+                }
+                else if (texData->Status == ImTextureStatus.WantUpdates)
+                {
+                    var key = (IntPtr)texData;
+                    if (this.texDataGpuTextures.TryGetValue(key, out var gpuTexture))
+                    {
+                        var pixels = (byte*)texData->GetPixels();
+                        var bytesPerPixel = texData->BytesPerPixel;
+                        this.graphicsContext.UpdateTextureData(gpuTexture, (IntPtr)pixels, (uint)(bytesPerPixel * texData->Width * texData->Height), 0);
+                    }
+
+                    texData->SetStatus(ImTextureStatus.OK);
+                }
+                else if (texData->Status == ImTextureStatus.WantDestroy)
+                {
+                    var key = (IntPtr)texData;
+                    IntPtr texId = (IntPtr)texData->GetTexID();
+
+                    if (this.resourceById.TryGetValue(texId, out var info))
+                    {
+                        info.ResourceSet.Dispose();
+                        this.resourceById.Remove(texId);
+                    }
+
+                    if (this.texDataGpuTextures.TryGetValue(key, out var gpuTexture))
+                    {
+                        gpuTexture.Dispose();
+                        this.texDataGpuTextures.Remove(key);
+                    }
+
+                    texData->SetStatus(ImTextureStatus.Destroyed);
+                }
+            }
+        }
+
         public void Dispose()
         {
             foreach (var rsi in this.resourceById)
@@ -622,6 +654,12 @@ namespace Common
 
             this.resourceByTexture.Clear();
             this.resourceById.Clear();
+            foreach (var texture in this.texDataGpuTextures.Values)
+            {
+                texture.Dispose();
+            }
+
+            this.texDataGpuTextures.Clear();
 
             ImguiNative.igDestroyContext(IntPtr.Zero);
             this.vertexBuffers[0].Dispose();
@@ -629,7 +667,8 @@ namespace Common
             this.indexBuffer.Dispose();
             this.constantBuffer.Dispose();
             this.layout.Dispose();
-            this.resourceSet.Dispose();
+            this.sampler.Dispose();
+            this.fontTexture?.Dispose();
         }
     }
 }

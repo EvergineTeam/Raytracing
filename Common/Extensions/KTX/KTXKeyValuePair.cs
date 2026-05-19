@@ -3,7 +3,7 @@
 namespace Common.Images.KTX
 {
     /// <summary>
-    /// The KTX key value pair class.
+    /// Represents the KTX key-value pair class.
     /// </summary>
     public class KTXKeyValuePair
     {
@@ -20,8 +20,8 @@ namespace Common.Images.KTX
         /// <summary>
         /// Initializes a new instance of the <see cref="KTXKeyValuePair"/> class.
         /// </summary>
-        /// <param name="key">The pair key.</param>
-        /// <param name="value">The pair value.</param>
+        /// <param name="key">The key of the pair.</param>
+        /// <param name="value">The value of the pair.</param>
         public KTXKeyValuePair(string key, byte[] value)
         {
             this.Key = key;

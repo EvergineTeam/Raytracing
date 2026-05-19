@@ -4,8 +4,6 @@ using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.IO;
 using Evergine.Common.Graphics;
-using Evergine.Framework.Assets.Extensions;
-using CommonImageHelpers = Evergine.Common.Helpers.ImageHelpers;
 
 namespace Common.Images
 {
@@ -52,8 +50,8 @@ namespace Common.Images
 #else
             reader.ReadBytes(8);
 #endif
-            uint width = (uint)CommonImageHelpers.ReadLittleEndianInt32(reader);
-            uint height = (uint)CommonImageHelpers.ReadLittleEndianInt32(reader);
+            uint width = (uint)ImageHelpers.ReadLittleEndianInt32(reader);
+            uint height = (uint)ImageHelpers.ReadLittleEndianInt32(reader);
 
             description = new ImageDescription()
             {
