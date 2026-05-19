@@ -103,7 +103,7 @@ namespace Common
 
             var layoutDescription = new ResourceLayoutDescription(
                     new LayoutElementDescription(0, ResourceType.ConstantBuffer, ShaderStages.Vertex),
-                    new LayoutElementDescription(0, ResourceType.Texture, ShaderStages.Pixel),
+                    new LayoutElementDescription(0, ResourceType.TextureView, ShaderStages.Pixel),
                     new LayoutElementDescription(0, ResourceType.Sampler, ShaderStages.Pixel));
 
             this.layout = this.graphicsContext.Factory.CreateResourceLayout(ref layoutDescription);
@@ -169,7 +169,6 @@ namespace Common
                 Format = PixelFormat.R8G8B8A8_UNorm,
                 Usage = ResourceUsage.Default,
                 Depth = 1,
-                Faces = 1,
                 ArraySize = 1,
                 MipLevels = 1,
                 SampleCount = TextureSampleCount.None,

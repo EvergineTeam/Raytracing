@@ -15,7 +15,7 @@ namespace PathTracer
             uint height = 720;
             using (var test = new PathTracerTest())
             {
-                GraphicsBackend preferredBackend = GraphicsBackend.DirectX12;
+                GraphicsBackend preferredBackend = GraphicsBackend.Vulkan;
                 if (args?.Length > 1)
                 {
                     bool parsed = Enum.TryParse(args[1], out preferredBackend);

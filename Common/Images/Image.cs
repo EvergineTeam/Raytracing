@@ -1,11 +1,14 @@
 ﻿// Copyright © 2019 Wave Engine S.L. All rights reserved. Use is subject to license terms.
 
+using Evergine.Common.Graphics;
+using Evergine.Framework.Assets.Extensions;
+using SixLabors.ImageSharp.Formats.Bmp;
+using SixLabors.ImageSharp.Formats.Tga;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Evergine.Common.Graphics;
-using Evergine.Framework.Assets.Extensions;
+using CommonImageHelpers = Evergine.Common.Helpers.ImageHelpers;
 
 namespace Common.Images
 {
@@ -14,6 +17,7 @@ namespace Common.Images
         protected static List<IDecoder> decoders;
 
         protected ImageDescription description;
+        protected ResourceUsage usage = ResourceUsage.Immutable;
 
         protected DataBox[] dataBoxes;
 
@@ -44,16 +48,13 @@ namespace Common.Images
                     Height = this.description.Height,
                     Format = this.description.pixelFormat,
                     MipLevels = this.description.MipLevels,
-                    ArraySize = this.description.ArraySize,
-                    Faces = this.description.Faces,
+                    ArraySize = this.description.ArraySize * this.description.Faces,
                     Depth = this.description.Depth,
                     CpuAccess = ResourceCpuAccess.None,
                     SampleCount = TextureSampleCount.None,
                     Flags = TextureFlags.ShaderResource,
-                    Usage = ResourceUsage.Default,
+                    Usage = usage,
                 };
-
-                textureDescription.Type = ImageHelpers.CalculateType(textureDescription);
 
                 return textureDescription;
             }
@@ -62,9 +63,9 @@ namespace Common.Images
         static Image()
         {
             decoders = new List<IDecoder>();
+            decoders.Add(new PNGDecoder());
             decoders.Add(new DDSDecoder());
             decoders.Add(new KTXDecoder());
-            decoders.Add(new PNGDecoder());
         }
 
         public static Image Load(Stream stream)
@@ -125,7 +126,7 @@ namespace Common.Images
                 magicBytes[i] = reader.ReadByte();
                 foreach (var decoder in decoders)
                 {
-                    if (ImageHelpers.StartsWith(magicBytes, decoder.HeaderBytes))
+                    if (CommonImageHelpers.StartsWith(magicBytes, decoder.HeaderBytes))
                     {
                         return decoder;
                     }
@@ -144,7 +145,7 @@ namespace Common.Images
                 magicBytes[i] = (byte)reader.ReadByte();
                 foreach (var decoder in decoders)
                 {
-                    if (ImageHelpers.StartsWith(magicBytes, decoder.HeaderBytes))
+                    if (CommonImageHelpers.StartsWith(magicBytes, decoder.HeaderBytes))
                     {
                         return decoder;
                     }
@@ -156,10 +157,9 @@ namespace Common.Images
 
         private TextureType CalculateType()
         {
-            if (this.description.ArraySize == 6)
+            if (this.description.Faces == 6)
             {
-                // Texture Cube without miplevels
-                return TextureType.TextureCube;
+                return this.description.ArraySize > 1 ? TextureType.TextureCubeArray : TextureType.TextureCube;
             }
             else if (this.description.Depth > 1)
             {
@@ -167,11 +167,11 @@ namespace Common.Images
             }
             else if (this.description.Height == 1)
             {
-                return TextureType.Texture1D;
+                return this.description.ArraySize > 1 ? TextureType.Texture1DArray : TextureType.Texture1D;
             }
             else
             {
-                return TextureType.Texture2D;
+                return this.description.ArraySize > 1 ? TextureType.Texture2DArray : TextureType.Texture2D;
             }
         }
 
