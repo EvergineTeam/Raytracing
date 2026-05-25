@@ -7,9 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Evergine.Common" Version="2026.5.19.266-nightly" />
-    <PackageReference Include="Evergine.ImGui" Version="2026.5.19.266-nightly" />
-    <PackageReference Include="Evergine.Mathematics" Version="2026.5.19.266-nightly" />
+    <PackageReference Include="Evergine.Common" Version="2026.5.26.8" />
+    <PackageReference Include="Evergine.ImGui" Version="2026.5.26.8" />
+    <PackageReference Include="Evergine.Mathematics" Version="2026.5.26.8" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
 	<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 	<PackageReference Include="Evergine.Bindings.Draco" Version="2025.10.14.20" />
