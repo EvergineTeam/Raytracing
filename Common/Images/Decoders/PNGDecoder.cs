@@ -1,6 +1,6 @@
 ﻿// Copyright © Plain Concepts S.L.U. All rights reserved. Use is subject to license terms.
 
-using SixLabors.ImageSharp.PixelFormats;
+using SkiaSharp;
 using System;
 using System.IO;
 using Evergine.Common.Graphics;
@@ -80,9 +80,10 @@ namespace Common.Images
                 reader.BaseStream.Seek(0, SeekOrigin.Begin);
 
                 byte[] data;
-                using (var image = SixLabors.ImageSharp.Image.Load<Rgba32>(reader.BaseStream))
+                var info = new SKImageInfo((int)description.Width, (int)description.Height, SKColorType.Rgba8888, SKAlphaType.Premul);
+                using (var bitmap = SKBitmap.Decode(reader.BaseStream, info))
                 {
-                    data = ImageHelpers.GetImageArray(image, true, out _);
+                    data = bitmap.Bytes;
                 }
 
                 uint formatSize = description.pixelFormat.GetSizeInBytes();

@@ -2,8 +2,6 @@
 
 using Evergine.Common.Graphics;
 using Evergine.Framework.Assets.Extensions;
-using SixLabors.ImageSharp.Formats.Bmp;
-using SixLabors.ImageSharp.Formats.Tga;
 using System;
 using System.Collections.Generic;
 using System.IO;
