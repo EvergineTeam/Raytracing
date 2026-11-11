@@ -333,7 +333,7 @@ namespace Common
 
             ImDrawData* drawData = ImguiNative.igGetDrawData();
 
-            if (drawData->CmdListsCount > 0)
+            if (drawData->CmdLists.Size > 0)
             {
                 int vertexBufferSize = drawData->TotalVtxCount * sizeof(ImDrawVert);
                 if (vertexBufferSize > this.vertexBuffers[0].Description.SizeInBytes)
@@ -367,7 +367,7 @@ namespace Common
                 var iResource = this.graphicsContext.MapMemory(this.indexBuffer, MapMode.Write);
 
                 ImVector<IntPtr> cmdList = new ImVector<IntPtr>(drawData->CmdLists);
-                for (int i = 0; i < drawData->CmdListsCount; i++)
+                for (int i = 0; i < drawData->CmdLists.Size; i++)
                 {
                     ImDrawList* cmdListPtr = (ImDrawList*)cmdList[i];
 
@@ -399,7 +399,7 @@ namespace Common
                 uint vtxOffset = 0;
                 uint idxOffset = 0;
 
-                for (int n = 0; n < drawData->CmdListsCount; n++)
+                for (int n = 0; n < drawData->CmdLists.Size; n++)
                 {
                     ImDrawList* cmdListPtr = (ImDrawList*)cmdList[n];
                     for (int i = 0; i < cmdListPtr->CmdBuffer.Size; i++)
